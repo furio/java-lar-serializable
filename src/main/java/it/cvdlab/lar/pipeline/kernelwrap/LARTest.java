@@ -1,8 +1,8 @@
 package it.cvdlab.lar.pipeline.kernelwrap;
 
-import it.cvdlab.lar.model.CLEngineConfig;
 import it.cvdlab.lar.model.CsrMatrix;
-import it.cvdlab.lar.model.PointerUtils;
+import it.cvdlab.lar.model.helpers.CLEngineConfig;
+import it.cvdlab.lar.model.helpers.PointerUtils;
 import it.cvdlab.lar.pipeline.helpers.ResponseTime;
 
 import java.io.IOException;
@@ -21,12 +21,11 @@ import com.nativelibs4java.opencl.CLEvent;
 import com.nativelibs4java.opencl.CLException;
 import com.nativelibs4java.opencl.CLKernel;
 import com.nativelibs4java.opencl.CLMem;
+import com.nativelibs4java.opencl.CLMem.Usage;
+import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.opencl.CLProgram;
 import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.JavaCL;
-import com.nativelibs4java.opencl.CLEvent.EventCallback;
-import com.nativelibs4java.opencl.CLMem.Usage;
-import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.opencl.LocalSize;
 import com.nativelibs4java.util.IOUtils;
 

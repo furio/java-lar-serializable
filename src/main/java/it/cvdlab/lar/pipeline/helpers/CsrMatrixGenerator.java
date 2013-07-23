@@ -38,6 +38,7 @@ public class CsrMatrixGenerator {
 		return createMatrix(csrsize_mb, nnz_per_row, half_nnz_diagonal);
 	}
 	
+	@SuppressWarnings("unused")
 	private static CsrMatrix createMatrix(int csrsize_mb, int nnz_per_row, boolean half_nnz_diagonal) {
 //		System.out.println(csrsize_mb + "-" + nnz_per_row + "-" + half_nnz_diagonal);
 		csrsize_mb = csrsize_mb * 1024 * 1024;

@@ -1,4 +1,4 @@
-package it.cvdlab.lar.model;
+package it.cvdlab.lar.model.helpers;
 
 public final class CLEngineConfig {
 	// String settings

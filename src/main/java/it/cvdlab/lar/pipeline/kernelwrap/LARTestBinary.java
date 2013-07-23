@@ -1,8 +1,8 @@
 package it.cvdlab.lar.pipeline.kernelwrap;
 
-import it.cvdlab.lar.model.CLEngineConfig;
 import it.cvdlab.lar.model.CsrMatrix;
-import it.cvdlab.lar.model.PointerUtils;
+import it.cvdlab.lar.model.helpers.CLEngineConfig;
+import it.cvdlab.lar.model.helpers.PointerUtils;
 import it.cvdlab.lar.pipeline.helpers.ArrayUtils;
 import it.cvdlab.lar.pipeline.helpers.BinaryTranslator;
 import it.cvdlab.lar.pipeline.helpers.ResponseTime;
@@ -10,14 +10,12 @@ import it.cvdlab.lar.pipeline.helpers.ResponseTime;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
 import org.bridj.Pointer;
 
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import com.nativelibs4java.opencl.CLBuffer;
 import com.nativelibs4java.opencl.CLContext;
@@ -26,12 +24,11 @@ import com.nativelibs4java.opencl.CLEvent;
 import com.nativelibs4java.opencl.CLException;
 import com.nativelibs4java.opencl.CLKernel;
 import com.nativelibs4java.opencl.CLMem;
+import com.nativelibs4java.opencl.CLMem.Usage;
+import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.opencl.CLProgram;
 import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.JavaCL;
-import com.nativelibs4java.opencl.CLEvent.EventCallback;
-import com.nativelibs4java.opencl.CLMem.Usage;
-import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.opencl.LocalSize;
 import com.nativelibs4java.util.IOUtils;
 
@@ -186,6 +183,7 @@ public class LARTestBinary {
 				// matrixA.getRowCount(), vectorSize, howManyVectors, );
 
 		// Multipli del work group consigliati
+		@SuppressWarnings("unused")
 		long multipleWorkGroup = howManyVectors;
 		Map<CLDevice, Long> prefsLocal = multiplyMatrixKernel.getPreferredWorkGroupSizeMultiple();
 		for(CLDevice currDev : prefsLocal.keySet()) {
