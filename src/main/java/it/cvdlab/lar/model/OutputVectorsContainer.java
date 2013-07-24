@@ -16,7 +16,7 @@ public class OutputVectorsContainer {
 	private List<List<Integer>> vectorOffset;
 	
 	@JsonProperty("bench")
-	private List<Integer> vectorStats;	
+	private List<Long> vectorStats;	
 	
 	@JsonIgnore
 	private static final Logger logger = LoggerFactory.getLogger(InputVectorsContainer.class);
@@ -39,11 +39,11 @@ public class OutputVectorsContainer {
 		this.vectorOffset = vectorOffset;
 	}
 	
-	public List<Integer> getVectorStats() {
+	public List<Long> getVectorStats() {
 		return vectorStats;
 	}
 
-	public void setVectorStats(List<Integer> vectorStats) {
+	public void setVectorStats(List<Long> vectorStats) {
 		this.vectorStats = vectorStats;
 	}	
 
