@@ -170,26 +170,12 @@ public class LARTestBinaryContinuos {
 			program.addBuildOption("-cl-finite-math-only");			
 		}
 
-		int[] wgSize;
-		int[] locSize;
-		
-		// Math.max(multipleWorkGroup, howManyVectors) ==> prendi il multiplo o i vettori
-		if (true && (runOn == DeviceFeature.CPU)) {
-			wgSize = new int[]{ howManyResultVectors };
-			locSize = null;
-		} else {
-			wgSize = new int[]{ (int) (howManyResultVectors * maxWorkGroupSize) }; 
-			locSize = new int[]{ (int) maxWorkGroupSize };			
-		}
-		
-		System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
-
 		// Get and call the kernel :
 		System.err.println("Create kernel");
 		CLKernel multiplyMatrixKernel = null;
 		
-		
-		for(int i = 0; i < howManyVectors; i += howManyResultVectors) {
+		int vectorsToCompute = howManyVectors;
+		for(int i = 0; i < howManyVectors; i += howManyResultVectors, vectorsToCompute -= howManyResultVectors) {
 			multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
 			
 			if (KERNEL_FUNCTION.indexOf("local") != -1) {
@@ -202,6 +188,21 @@ public class LARTestBinaryContinuos {
 				multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
 					cl_vector_data, cl_output_data, i);
 			}
+			
+			int[] wgSize;
+			int[] locSize;
+			int multipleGroupSize = Math.min(howManyResultVectors, vectorsToCompute);
+			
+			// Math.max(multipleWorkGroup, howManyVectors) ==> prendi il multiplo o i vettori
+			if (true && (runOn == DeviceFeature.CPU)) {
+				wgSize = new int[]{ multipleGroupSize };
+				locSize = null;
+			} else {
+				wgSize = new int[]{ (int) (multipleGroupSize * maxWorkGroupSize) }; 
+				locSize = new int[]{ (int) maxWorkGroupSize };			
+			}
+			
+			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));			
 			
 			// queue.finish();
 			CLEvent addEvt = null;
