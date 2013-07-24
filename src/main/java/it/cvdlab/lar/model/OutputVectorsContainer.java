@@ -38,4 +38,45 @@ public class OutputVectorsContainer {
 	public void setVectorOffset(List<List<Integer>> vectorOffset) {
 		this.vectorOffset = vectorOffset;
 	}
+	
+	public List<Integer> getVectorStats() {
+		return vectorStats;
+	}
+
+	public void setVectorStats(List<Integer> vectorStats) {
+		this.vectorStats = vectorStats;
+	}	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((vectorList == null) ? 0 : vectorList.hashCode());
+		result = prime * result
+				+ ((vectorOffset == null) ? 0 : vectorOffset.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OutputVectorsContainer other = (OutputVectorsContainer) obj;
+		if (vectorList == null) {
+			if (other.vectorList != null)
+				return false;
+		} else if (!vectorList.equals(other.vectorList))
+			return false;
+		if (vectorOffset == null) {
+			if (other.vectorOffset != null)
+				return false;
+		} else if (!vectorOffset.equals(other.vectorOffset))
+			return false;
+		return true;
+	}
 }

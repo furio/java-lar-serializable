@@ -34,15 +34,15 @@ import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinary {
 	private static DeviceFeature runOn = DeviceFeature.CPU;
-	private static String KERNEL_FILE = "larnewfullbinary.cl";
-	private static String KERNEL_FUNCTION = "many_vec_mul_local_bitwise"; // "many_vec_mul_local_bitwise_binary"
+	private static String KERNEL_FILE = "larnewfullbinary_modulo.cl";
+	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise"
 	
 	private static String D_ROWSIZE = "ROWSIZE";
 	private static String D_OLDVECTORSIZE = "OLDVECTORSIZE";
 	private static String D_INPUTVECTORSIZE = "INPUTVECTORSIZE";
 	private static String D_TOTALVECTORSSIZE = "TOTALVECTORSSIZE";
 
-	private static CsrMatrix clMultiply(CsrMatrix matrixA, int[] vector, int vectorSize, int oldVectorSize) {
+	public static List<Integer> clMultiply(CsrMatrix matrixA, int[] vector, int vectorSize, int oldVectorSize) {
 		int howManyVectors = vector.length / vectorSize;
 		System.out.println("Vector count: " + howManyVectors);
 		System.out.println("Single vector size: " + vectorSize);
@@ -77,7 +77,6 @@ public class LARTestBinary {
 		ByteOrder byteOrder = context.getByteOrder();
 
 		// Native memory
-		Pointer<Float> matA_data = null;
 		Pointer<Integer> vector_data = null;
 		Pointer<Integer> matA_rowptr, matA_colindices;
 
@@ -89,21 +88,16 @@ public class LARTestBinary {
 		matA_colindices = Pointer.allocateInts(matrixA.getColdata().size())
 				.order(byteOrder);
 		pointersRelease.add(matA_colindices);
-		matA_data = Pointer.allocateFloats(matrixA.getData().size()).order(
-				byteOrder);
-		pointersRelease.add(matA_data);
 		vector_data = Pointer.allocateInts(vector.length).order(byteOrder);
 		pointersRelease.add(vector_data);
 
 		PointerUtils.copyToPointer(matrixA.getRowptr(), matA_rowptr);
 		PointerUtils.copyToPointer(matrixA.getColdata(), matA_colindices);
-		PointerUtils.copyToPointer(matrixA.getData(), matA_data);
 		PointerUtils.copyToPointer(Ints.asList(vector), vector_data);
 
 		// CLBuffers
 		CLBuffer<Integer> cl_matA_rowptr = null, cl_matA_colindices = null , cl_vector_data = null;
-		CLBuffer<Float> cl_matA_data = null;
-		CLBuffer<Float> cl_output_data = null;
+		CLBuffer<Integer> cl_output_data = null;
 
 		System.err.println("CL Buffers");
 		try {
@@ -113,16 +107,13 @@ public class LARTestBinary {
 			cl_matA_colindices = context.createBuffer(Usage.Input,
 					matA_colindices, CLEngineConfig.isUSE_DEVICE_MEM());
 			buffersRelease.add(cl_matA_colindices);
-			cl_matA_data = context.createBuffer(Usage.Input, matA_data,
-					CLEngineConfig.isUSE_DEVICE_MEM());
-			buffersRelease.add(cl_matA_data);
 
 			cl_vector_data = context.createBuffer(Usage.Input, vector_data,
 					CLEngineConfig.isUSE_DEVICE_MEM());
 			buffersRelease.add(cl_vector_data);
 
 			// Output buffer
-			cl_output_data = context.createFloatBuffer(Usage.Output,
+			cl_output_data = context.createIntBuffer(Usage.Output,
 					matrixA.getRowCount() * howManyVectors);
 			buffersRelease.add(cl_output_data);
 		} catch (CLException e) {
@@ -175,12 +166,19 @@ public class LARTestBinary {
 		System.err.println("Create kernel");
 		CLKernel multiplyMatrixKernel = null;
 		multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
-		System.err.println("Adding local cache");
-			
-		multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
-				cl_matA_data, cl_vector_data, cl_output_data,
+		
+		
+		if (KERNEL_FUNCTION.indexOf("local") != -1) {
+			System.err.println("Adding local cache");
+			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+				cl_vector_data, cl_output_data,
 				new LocalSize(vectorSize*Integer.SIZE));
-				// matrixA.getRowCount(), vectorSize, howManyVectors, );
+		} else {
+			System.err.println("No local cache");
+			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+				cl_vector_data, cl_output_data);
+		}
+
 
 		// Multipli del work group consigliati
 		@SuppressWarnings("unused")
@@ -226,14 +224,13 @@ public class LARTestBinary {
 		}
 		addEvt.setCompletionCallback(new ResponseTime(kernelTime));
 
-		Pointer<Float> matrixDataOut = cl_output_data.read(queue, addEvt);
+		Pointer<Integer> matrixDataOut = cl_output_data.read(queue, addEvt);
 		pointersRelease.add(matrixDataOut);
 		// Pointer<Float> matrixDataOut =
 		// Pointer.allocateFloats(matrixA.getRowCount()*matrixBToTranspose.getColCount()).order(byteOrder);
 		// cl_output_data.read(queue, matrixDataOut, true, addEvt);
 
-		List<Float> listMatrixOut = PointerUtils
-				.copyFromPointerFloat(matrixDataOut);
+		List<Integer> listMatrixOut = PointerUtils.copyFromPointerInteger(matrixDataOut);
 
 		addEvt.release();
 		queue.flush();
@@ -250,7 +247,7 @@ public class LARTestBinary {
 
 		System.out.println(listMatrixOut);
 
-		return null;
+		return listMatrixOut;
 	}
 
 	private static void clearAllocatedCLObjects(List<CLMem> listOfObjects) {

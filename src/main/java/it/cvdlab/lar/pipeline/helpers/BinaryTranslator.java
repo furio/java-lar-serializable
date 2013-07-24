@@ -2,6 +2,9 @@ package it.cvdlab.lar.pipeline.helpers;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
+
+import org.apache.commons.lang.ArrayUtils;
 
 public class BinaryTranslator {
 	private BinaryTranslator() {}
@@ -20,6 +23,16 @@ public class BinaryTranslator {
 		
 		return fromArrays(chainTo);
 	}	
+
+	public static int[][] fromArrays(List<List<Integer>> source) {
+		int[][] returnArray = new int[source.size()][];
+		
+		for(int i = 0; i < source.size(); ++i) {
+			returnArray[i] = fromArray(ArrayUtils.toPrimitive( source.get(i).toArray(new Integer[1]) ));
+		}
+		
+		return returnArray;
+	}
 	
 	public static int[][] fromArrays(int[][] source) {
 		int[][] returnArray = new int[source.length][];
@@ -36,7 +49,7 @@ public class BinaryTranslator {
 	}
 	
 	private static int[] toBitsetIntegerArray(int[] source) {
-		BitSet bsTemp = new BitSet();
+		BitSet bsTemp = new BitSet(source.length);
 		
 		for(int i = 0; i < source.length; ++i) {
 			if (source[i] > 0) {
