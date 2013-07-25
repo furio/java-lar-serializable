@@ -12,7 +12,6 @@ final class CooTriplet implements Comparable<CooTriplet> {
 		this.val = val;
 	}	
 	
-	@Override
 	public int compareTo(CooTriplet o) {
 		if (this.getX() != o.getX()) {
 			return this.getX() - o.getX();

@@ -31,9 +31,9 @@ import com.nativelibs4java.opencl.LocalSize;
 import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinary {
-	private static DeviceFeature runOn = DeviceFeature.CPU;
+	private static DeviceFeature runOn = DeviceFeature.GPU;
 	private static String KERNEL_FILE = "larnewfullbinary_modulo.cl";
-	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise"
+	private static String KERNEL_FUNCTION = "many_vec_mul_local_bitwise_binary"; // "many_vec_mul_local_bitwise_binary"
 	
 	private static String D_ROWSIZE = "ROWSIZE";
 	private static String D_OLDVECTORSIZE = "OLDVECTORSIZE";

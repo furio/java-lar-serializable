@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/lar-serializable/src/main/java/it/cvdlab/lar/pipeline/run/RunJob.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="false"/>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="LD_PRELOAD" value="/usr/lib/jvm/java-7-oracle/jre/lib/amd64/libjsig.so"/>
+</mapAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="it.cvdlab.lar.pipeline.run.RunJob"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="lar-serializable"/>
+<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xcheck:jni -Xmx14100m"/>
+</launchConfiguration>
