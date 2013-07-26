@@ -53,8 +53,7 @@ public class RunJob {
 			for(int i = 0; i < vectorsCount; i++) {
 				List<Byte> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
 				for(int j = 0; j < b3.getRowCount(); j++) {
-					byte temp = result.get(i*b3.getRowCount() + j);
-					currList.add(temp);
+					currList.add( result.get(i*b3.getRowCount() + j) );
 				}
 				resultsAnnidated.add(i, currList);
 			}
