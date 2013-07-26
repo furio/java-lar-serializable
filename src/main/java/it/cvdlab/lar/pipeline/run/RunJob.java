@@ -23,7 +23,9 @@ public class RunJob {
 	private static final Integer[] CRAP_INT_VECTOR = {};
 	
 	public static void main(String[] args) {
+		System.out.println("Lettura bordo3");
 		CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(BORDO3_FILE);
+		System.out.println("Lettura q.c.");
 		InputVectorsContainer ivc = InputVectorsSerialize.fromFile(SELETTORI_FILE);
 		
 		runJob(bordo3, ivc);
@@ -33,17 +35,19 @@ public class RunJob {
 		int vectorLength = ivc.getVectorList().get(0).size();
 		int vectorsCount = ivc.getVectorList().size();
 		
+		System.out.println("Conversione a binario delle q.c.");
 		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
 		
 		int bitSetLength = (int)Math.ceil((double)vectorLength / (double)Integer.SIZE);
 
+		System.out.println("Chiamata kernel");
 		List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
 		List<List<Byte>> resultsAnnidated = Lists.newArrayListWithCapacity(vectorsCount);
 		
-		
+		System.out.println("Conversione risultati");
 		List<Byte> result;
 		long totalElapsed = 0;
 		for(ResultTuple rtCurr: resultTuples) {
@@ -62,6 +66,7 @@ public class RunJob {
 		ov.setVectorList(resultsAnnidated);
 		ov.setVectorStats( Lists.newArrayList(new Long(totalElapsed), new Long(0)) );
 		
+		System.out.println("Serializzazione risultati");
 		OutputVectorsSerialize.toFile(ov, OUTPUT_FILE);
 	}
 	
