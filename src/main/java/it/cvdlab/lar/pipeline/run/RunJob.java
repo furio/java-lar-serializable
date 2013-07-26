@@ -9,7 +9,7 @@ import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;
 import it.cvdlab.lar.pipeline.helpers.ArrayUtils;
 import it.cvdlab.lar.pipeline.helpers.BinaryTranslator;
 import it.cvdlab.lar.pipeline.helpers.ResultTuple;
-import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinary;
+import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinaryContinuos;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class RunJob {
 		int bitSetLength = (int)Math.ceil((double)vectorLength / (double)Integer.SIZE);
 
 		System.out.println("Chiamata kernel");
-		List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		List<ResultTuple> resultTuples = LARTestBinaryContinuos.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
@@ -54,7 +54,7 @@ public class RunJob {
 			result = rtCurr.getDataOutput();
 			totalElapsed += rtCurr.getElapsedTime();
 			
-			for(int i = 0; i < vectorsCount; i++) {
+			for(int i = 0; i < rtCurr.getVectorsQty(); i++) {
 				List<Byte> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
 				for(int j = 0; j < b3.getRowCount(); j++) {
 					currList.add( result.get(i*b3.getRowCount() + j) );

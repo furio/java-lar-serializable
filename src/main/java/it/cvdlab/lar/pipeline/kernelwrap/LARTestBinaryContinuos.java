@@ -41,6 +41,8 @@ public class LARTestBinaryContinuos {
 	
 	private static long TOTAL_MEMORY = 0;
 	private static long RESULT_VECTOR_SIZE = 0;
+	private static long MAX_ALLOCATION = 0;
+	private static long MAX_ALLOCABLE_MEMORY = 0;
 
 	public static List<ResultTuple> clMultiply(CsrMatrix matrixA, int[] vector, int vectorSize, int oldVectorSize) {
 		int howManyVectors = vector.length / vectorSize;
@@ -52,7 +54,7 @@ public class LARTestBinaryContinuos {
 		// Stora i risultati
 		List<ResultTuple> lsOutput = Lists.newArrayList();
 		
-		// Vettore risultato è grosso
+		// Vettore risultato ï¿½ grosso
 		RESULT_VECTOR_SIZE = matrixA.getRowCount();
 
 		// Lista di CL buffer da deallocare
@@ -78,7 +80,9 @@ public class LARTestBinaryContinuos {
 		for (CLDevice currDev : context.getDevices()) {
 			maxWorkGroupSize = Math.min(maxWorkGroupSize, currDev.getMaxWorkGroupSize());
 			TOTAL_MEMORY += currDev.getGlobalMemSize();
+			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / 8;
 		}
+		System.out.println("Max Alloc Size: " + MAX_ALLOCATION);
 		System.out.println("Max Wg Size: " + maxWorkGroupSize);
 
 		CLQueue queue = context.createDefaultQueue();
@@ -121,10 +125,14 @@ public class LARTestBinaryContinuos {
 			TOTAL_MEMORY -= cl_vector_data.getByteCount();
 			buffersRelease.add(cl_vector_data);
 
+			
 			// Output buffer
-			howManyResultVectors = (int) (TOTAL_MEMORY/RESULT_VECTOR_SIZE);
+			MAX_ALLOCABLE_MEMORY = Math.min(MAX_ALLOCATION, TOTAL_MEMORY);
+			howManyResultVectors = (int) (MAX_ALLOCABLE_MEMORY/RESULT_VECTOR_SIZE);
+			System.out.println("Allocable memory: " + MAX_ALLOCABLE_MEMORY);
 			System.out.println("Computable vectors: " + howManyResultVectors);
-			cl_output_data = context.createByteBuffer(Usage.Output, matrixA.getRowCount() * howManyResultVectors);
+			System.out.println("Will allocate memory: " + ((long)matrixA.getRowCount()) * ((long)howManyResultVectors));
+			cl_output_data = context.createByteBuffer(Usage.Output, ((long)matrixA.getRowCount()) * ((long)howManyResultVectors));
 			buffersRelease.add(cl_output_data);
 		} catch (CLException e) {
 			queue.flush();
@@ -176,6 +184,7 @@ public class LARTestBinaryContinuos {
 		
 		int vectorsToCompute = howManyVectors;
 		for(int i = 0; i < howManyVectors; i += howManyResultVectors, vectorsToCompute -= howManyResultVectors) {
+			System.err.println("Create kernel " + "["+i+"]" + "["+vectorsToCompute+"]");
 			multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
 			
 			if (KERNEL_FUNCTION.indexOf("local") != -1) {
@@ -202,9 +211,12 @@ public class LARTestBinaryContinuos {
 				locSize = new int[]{ (int) maxWorkGroupSize };			
 			}
 			
-			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));			
+						
+			System.err.println("Memory sync");
+			queue.finish();
 			
-			// queue.finish();
+			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
+			
 			CLEvent addEvt = null;
 			long kernelTime = System.currentTimeMillis();
 			if (true && (runOn == DeviceFeature.CPU)) {
@@ -218,6 +230,7 @@ public class LARTestBinaryContinuos {
 			ResponseTime rtCount = new ResponseTime(kernelTime);
 			addEvt.setCompletionCallback(rtCount);
 
+			System.out.println("Copying back memory from GPU");
 			Pointer<Byte> matrixDataOut = cl_output_data.read(queue, addEvt);
 			if (i == 0) {
 				pointersRelease.add(matrixDataOut);
@@ -226,13 +239,15 @@ public class LARTestBinaryContinuos {
 			// Pointer<Float> matrixDataOut =
 			// Pointer.allocateFloats(matrixA.getRowCount()*matrixBToTranspose.getColCount()).order(byteOrder);
 			// cl_output_data.read(queue, matrixDataOut, true, addEvt);
-
+			System.out.println("Copying back memory to struct");
 			List<Byte> listMatrixOut = PointerUtils.copyFromPointerByte(matrixDataOut);
 			
+			System.out.println("Release kernel");
 			addEvt.release();
 			multiplyMatrixKernel.release();
 			
-			lsOutput.add(new ResultTuple(listMatrixOut, rtCount.elapsedTime()));
+			System.out.println("Add in CPU memory");
+			lsOutput.add(new ResultTuple(listMatrixOut, multipleGroupSize, rtCount.elapsedTime()));
 		}
 
 		queue.flush();

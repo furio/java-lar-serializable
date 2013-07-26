@@ -252,7 +252,7 @@ public class LARTestBinary {
 				+ (System.currentTimeMillis() - startTime) + " millis");
 
 		// System.out.println(listMatrixOut);
-		lsOutput.add(new ResultTuple(listMatrixOut, rtCount.elapsedTime()));
+		lsOutput.add(new ResultTuple(listMatrixOut, howManyVectors, rtCount.elapsedTime()));
 
 		return lsOutput;
 	}
