@@ -30,7 +30,7 @@ import com.nativelibs4java.opencl.LocalSize;
 import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinaryContinuos {
-	private static DeviceFeature runOn = DeviceFeature.CPU;
+	private static DeviceFeature runOn = DeviceFeature.GPU;
 	private static String KERNEL_FILE = "larnewfullbinary_modulo_offset.cl";
 	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise"
 	
@@ -80,7 +80,7 @@ public class LARTestBinaryContinuos {
 		for (CLDevice currDev : context.getDevices()) {
 			maxWorkGroupSize = Math.min(maxWorkGroupSize, currDev.getMaxWorkGroupSize());
 			TOTAL_MEMORY += currDev.getGlobalMemSize();
-			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / 8;
+			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / 2;
 		}
 		System.out.println("Max Alloc Size: " + MAX_ALLOCATION);
 		System.out.println("Max Wg Size: " + maxWorkGroupSize);
