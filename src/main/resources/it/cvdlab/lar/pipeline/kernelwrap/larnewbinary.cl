@@ -47,7 +47,7 @@ __kernel void many_vec_mul_local_binary(
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
 			// dot_prod += elements[i] * localVector[ column_indices[i] ];
 			// float multiplication and addition, this is more performing when supported
-			dot_prod = fma(1.0, localVector[ column_indices[i] ], dot_prod);
+			dot_prod += localVector[ column_indices[i] ];
 		}
 		result[ row ] = dot_prod;
 	}

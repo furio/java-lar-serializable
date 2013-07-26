@@ -53,7 +53,7 @@ public class LARTestBinaryContinuos {
 		List<ResultTuple> lsOutput = Lists.newArrayList();
 		
 		// Vettore risultato è grosso
-		RESULT_VECTOR_SIZE = matrixA.getRowCount() * (Integer.SIZE / 8);
+		RESULT_VECTOR_SIZE = matrixA.getRowCount();
 
 		// Lista di CL buffer da deallocare
 		List<CLMem> buffersRelease = Lists.newArrayList();
@@ -103,7 +103,7 @@ public class LARTestBinaryContinuos {
 
 		// CLBuffers
 		CLBuffer<Integer> cl_matA_rowptr = null, cl_matA_colindices = null , cl_vector_data = null;
-		CLBuffer<Integer> cl_output_data = null;
+		CLBuffer<Byte> cl_output_data = null;
 
 		System.err.println("CL Buffers");
 		try {
@@ -124,7 +124,7 @@ public class LARTestBinaryContinuos {
 			// Output buffer
 			howManyResultVectors = (int) (TOTAL_MEMORY/RESULT_VECTOR_SIZE);
 			System.out.println("Computable vectors: " + howManyResultVectors);
-			cl_output_data = context.createIntBuffer(Usage.Output, matrixA.getRowCount() * howManyResultVectors);
+			cl_output_data = context.createByteBuffer(Usage.Output, matrixA.getRowCount() * howManyResultVectors);
 			buffersRelease.add(cl_output_data);
 		} catch (CLException e) {
 			queue.flush();
@@ -218,7 +218,7 @@ public class LARTestBinaryContinuos {
 			ResponseTime rtCount = new ResponseTime(kernelTime);
 			addEvt.setCompletionCallback(rtCount);
 
-			Pointer<Integer> matrixDataOut = cl_output_data.read(queue, addEvt);
+			Pointer<Byte> matrixDataOut = cl_output_data.read(queue, addEvt);
 			if (i == 0) {
 				pointersRelease.add(matrixDataOut);
 			}
@@ -227,7 +227,7 @@ public class LARTestBinaryContinuos {
 			// Pointer.allocateFloats(matrixA.getRowCount()*matrixBToTranspose.getColCount()).order(byteOrder);
 			// cl_output_data.read(queue, matrixDataOut, true, addEvt);
 
-			List<Integer> listMatrixOut = PointerUtils.copyFromPointerInteger(matrixDataOut);
+			List<Byte> listMatrixOut = PointerUtils.copyFromPointerByte(matrixDataOut);
 			
 			addEvt.release();
 			multiplyMatrixKernel.release();

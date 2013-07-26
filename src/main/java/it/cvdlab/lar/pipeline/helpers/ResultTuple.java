@@ -4,15 +4,15 @@ import java.util.List;
 
 public class ResultTuple {
 
-	private List<Integer> dataOutput;
+	private List<Byte> dataOutput;
 	private long elapsedTime;
 	
-	public ResultTuple(List<Integer> dataOutput, long elapsedTime) {
+	public ResultTuple(List<Byte> dataOutput, long elapsedTime) {
 		super();
 		this.dataOutput = dataOutput;
 		this.elapsedTime = elapsedTime;
 	}
-	public List<Integer> getDataOutput() {
+	public List<Byte> getDataOutput() {
 		return dataOutput;
 	}
 	public long getElapsedTime() {

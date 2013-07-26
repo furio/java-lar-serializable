@@ -41,19 +41,19 @@ public class RunJob {
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
-		List<List<Integer>> resultsAnnidated = Lists.newArrayListWithCapacity(vectorsCount);
+		List<List<Byte>> resultsAnnidated = Lists.newArrayListWithCapacity(vectorsCount);
 		
 		
-		List<Integer> result;
+		List<Byte> result;
 		long totalElapsed = 0;
 		for(ResultTuple rtCurr: resultTuples) {
 			result = rtCurr.getDataOutput();
 			totalElapsed += rtCurr.getElapsedTime();
 			
 			for(int i = 0; i < vectorsCount; i++) {
-				List<Integer> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
+				List<Byte> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
 				for(int j = 0; j < b3.getRowCount(); j++) {
-					int temp = result.get(i*b3.getRowCount() + j);
+					byte temp = result.get(i*b3.getRowCount() + j);
 					currList.add(temp);
 				}
 				resultsAnnidated.add(i, currList);

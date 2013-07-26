@@ -102,7 +102,7 @@ public class LARTestBinary {
 
 		// CLBuffers
 		CLBuffer<Integer> cl_matA_rowptr = null, cl_matA_colindices = null , cl_vector_data = null;
-		CLBuffer<Integer> cl_output_data = null;
+		CLBuffer<Byte> cl_output_data = null;
 
 		System.err.println("CL Buffers");
 		try {
@@ -118,7 +118,7 @@ public class LARTestBinary {
 			buffersRelease.add(cl_vector_data);
 
 			// Output buffer
-			cl_output_data = context.createIntBuffer(Usage.Output,
+			cl_output_data = context.createByteBuffer(Usage.Output,
 					matrixA.getRowCount() * howManyVectors);
 			buffersRelease.add(cl_output_data);
 		} catch (CLException e) {
@@ -230,13 +230,13 @@ public class LARTestBinary {
 		ResponseTime rtCount = new ResponseTime(kernelTime);
 		addEvt.setCompletionCallback(rtCount);
 
-		Pointer<Integer> matrixDataOut = cl_output_data.read(queue, addEvt);
+		Pointer<Byte> matrixDataOut = cl_output_data.read(queue, addEvt);
 		pointersRelease.add(matrixDataOut);
 		// Pointer<Float> matrixDataOut =
 		// Pointer.allocateFloats(matrixA.getRowCount()*matrixBToTranspose.getColCount()).order(byteOrder);
 		// cl_output_data.read(queue, matrixDataOut, true, addEvt);
 
-		List<Integer> listMatrixOut = PointerUtils.copyFromPointerInteger(matrixDataOut);
+		List<Byte> listMatrixOut = PointerUtils.copyFromPointerByte(matrixDataOut);
 		
 		addEvt.release();
 		queue.flush();

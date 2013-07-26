@@ -21,6 +21,14 @@ public final class PointerUtils {
 		return Lists.newArrayList(tmpList);
 	}
 
+	public static List<Byte> copyFromPointerByte(Pointer<Byte> bPointer) {
+		List<Byte> tmpList = Lists.newArrayList();
+		for(Byte singleData: bPointer) {
+			tmpList.add( new Byte(singleData) );
+		}
+		return Lists.newArrayList(tmpList);
+	}
+	
 	public static List<Integer> copyFromPointerInteger(Pointer<Integer> iPointer) {
 		List<Integer> tmpList = Lists.newArrayList();
 		for(Integer singleData: iPointer) {
