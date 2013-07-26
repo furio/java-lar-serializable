@@ -31,6 +31,7 @@ import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinaryContinuos {
 	private static DeviceFeature runOn = DeviceFeature.GPU;
+	private static int memDivisor = (runOn == DeviceFeature.CPU) ? 8 : 2;
 	private static String KERNEL_FILE = "larnewfullbinary_modulo_offset.cl";
 	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise"
 	
@@ -80,7 +81,7 @@ public class LARTestBinaryContinuos {
 		for (CLDevice currDev : context.getDevices()) {
 			maxWorkGroupSize = Math.min(maxWorkGroupSize, currDev.getMaxWorkGroupSize());
 			TOTAL_MEMORY += currDev.getGlobalMemSize();
-			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / 2;
+			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / memDivisor;
 		}
 		System.out.println("Max Alloc Size: " + MAX_ALLOCATION);
 		System.out.println("Max Wg Size: " + maxWorkGroupSize);
@@ -129,6 +130,7 @@ public class LARTestBinaryContinuos {
 			// Output buffer
 			MAX_ALLOCABLE_MEMORY = Math.min(MAX_ALLOCATION, TOTAL_MEMORY);
 			howManyResultVectors = (int) (MAX_ALLOCABLE_MEMORY/RESULT_VECTOR_SIZE);
+			// howManyResultVectors = 1;
 			System.out.println("Allocable memory: " + MAX_ALLOCABLE_MEMORY);
 			System.out.println("Computable vectors: " + howManyResultVectors);
 			System.out.println("Will allocate memory: " + ((long)matrixA.getRowCount()) * ((long)howManyResultVectors));
@@ -207,13 +209,16 @@ public class LARTestBinaryContinuos {
 				wgSize = new int[]{ multipleGroupSize };
 				locSize = null;
 			} else {
+				// TODO: Magic number GTX 670
+				maxWorkGroupSize = 192;
 				wgSize = new int[]{ (int) (multipleGroupSize * maxWorkGroupSize) }; 
 				locSize = new int[]{ (int) maxWorkGroupSize };			
 			}
 			
-						
-			System.err.println("Memory sync");
-			queue.finish();
+			if (i == 0) {
+				System.err.println("Memory sync");
+				queue.finish();				
+			}
 			
 			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
 			
