@@ -3,10 +3,12 @@ package it.cvdlab.lar.model.serialize;
 import it.cvdlab.lar.model.OutputVectorsContainer;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.ByteBuffer;
+import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class OutputVectorsSerialize {
@@ -18,8 +20,7 @@ public class OutputVectorsSerialize {
     	OutputVectorsContainer output = null;
     	
     	try {
-			String jsonMatrix = new String(Files.readAllBytes(Paths.get(filePath)));
-			output = jacksonMapper.readValue(jsonMatrix, OutputVectorsContainer.class);
+			output = jacksonMapper.readValue(new File(filePath), OutputVectorsContainer.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -33,5 +34,38 @@ public class OutputVectorsSerialize {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    } 
+    }
+    
+    public static void toBinaryFile(OutputVectorsContainer input, String filePath) {
+    	FileOutputStream fos = null;
+    	
+    	try {
+    		fos = new FileOutputStream(filePath);
+    		
+    		for(List<Byte> currList: input.getVectorList()) {
+    			fos.write( ArrayUtils.toPrimitive(currList.toArray(new Byte[1])) );
+    		}
+    		
+    		// Serialize offset vettori
+    		ByteBuffer bfWrite = ByteBuffer.allocate(4);
+    		
+    		for(List<Integer> currList: input.getVectorOffset()) {
+    			for(Integer currInt : currList) {
+    				bfWrite.putInt(currInt);
+    				fos.write( bfWrite.array() );
+    				bfWrite.rewind();
+    			}
+    		}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (fos != null) {
+					fos.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+    }    
 }

@@ -3,10 +3,12 @@ package it.cvdlab.lar.model;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class OutputVectorsContainer {
 
 	@JsonProperty("lista_vettori")
@@ -45,7 +47,7 @@ public class OutputVectorsContainer {
 
 	public void setVectorStats(List<Long> vectorStats) {
 		this.vectorStats = vectorStats;
-	}	
+	}
 
 	@Override
 	public int hashCode() {
@@ -53,13 +55,27 @@ public class OutputVectorsContainer {
 		int result = 1;
 		result = prime * result
 				+ ((vectorList == null) ? 0 : vectorList.hashCode());
-		result = prime * result
-				+ ((vectorOffset == null) ? 0 : vectorOffset.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		OutputVectorsContainer other = (OutputVectorsContainer) obj;
+		if (vectorList == null) {
+			if (other.vectorList != null)
+				return false;
+		} else if (!vectorList.equals(other.vectorList))
+			return false;
+		return true;
+	}
+
+	public boolean equalsWithOffset(Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
