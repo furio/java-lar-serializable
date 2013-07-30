@@ -95,8 +95,8 @@ public class RunJobLimited {
 		System.out.println("Chiamata kernel");
 		System.out.println("New vLength: " + bitSetLength);
 		System.out.println("Old vLength: " + vectorLength);
-		// List<ResultTuple> resultTuples = LARTestBinaryJava.clMultiply(b3, flatResult, bitSetLength, vectorLength);
-		List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		List<ResultTuple> resultTuples = LARTestBinaryJava.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		// List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
