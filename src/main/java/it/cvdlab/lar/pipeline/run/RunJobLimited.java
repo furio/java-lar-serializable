@@ -57,7 +57,7 @@ public class RunJobLimited {
 		
 		String input_bordo = BORDO3_FILE;
 		String input_selettori = SELETTORI_FILE;
-		String output_selettori = SELETTORI_FILE;
+		String output_vettori = OUTPUT_FILE;
 		
 		if (cmd.hasOption("b")) {
 			input_bordo = cmd.getOptionValue("b");
@@ -68,15 +68,19 @@ public class RunJobLimited {
 		}
 		
 		if (cmd.hasOption("o")) {
-			output_selettori = cmd.getOptionValue("o");
-		}		
+			output_vettori = cmd.getOptionValue("o");
+		}
+		
+		System.out.println("Bordo3: " + input_bordo);
+		System.out.println("Selettori: " + input_selettori);
+		System.out.println("Output: " + output_vettori);		
 		
 		System.out.println("Lettura bordo3");
 		CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
 		System.out.println("Lettura q.c.");
 		InputVectorsContainer ivc = InputVectorsSerialize.fromFile(input_selettori);
 		
-		runJob(bordo3, ivc, output_selettori);
+		runJob(bordo3, ivc, output_vettori);
 	}
 	
 	private static void runJob(CsrMatrix b3, InputVectorsContainer ivc, String outFile) {
