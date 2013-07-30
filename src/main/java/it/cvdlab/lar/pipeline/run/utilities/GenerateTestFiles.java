@@ -1,14 +1,14 @@
-package it.cvdlab.lar.pipeline.run;
-
-import java.util.List;
-
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
+package it.cvdlab.lar.pipeline.run.utilities;
 
 import it.cvdlab.lar.model.CsrMatrix;
 import it.cvdlab.lar.model.InputVectorsContainer;
 import it.cvdlab.lar.model.serialize.CsrMatrixSerializable;
 import it.cvdlab.lar.model.serialize.InputVectorsSerialize;
+
+import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
 
 public class GenerateTestFiles {
 	private GenerateTestFiles() {}
@@ -21,7 +21,7 @@ public class GenerateTestFiles {
 				1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1 };
 
 		CsrMatrix csrMatrixOne = CsrMatrix.fromFlattenArray(matrixOne, 5);
-		CsrMatrixSerializable.toFile(csrMatrixOne, RunJob.BORDO3_FILE);
+		CsrMatrixSerializable.toFile(csrMatrixOne, DefaultFileNames.BORDO3_FILE);
 		
 		int[] offset = {0,0,0};
 		int[] vettore1 = {1, 1, 1, 0, 1};
@@ -48,7 +48,7 @@ public class GenerateTestFiles {
 		iv.setVectorList(outsideList);
 		iv.setVectorOffset(offsetList);
 		
-		InputVectorsSerialize.toFile(iv, RunJob.SELETTORI_FILE);
+		InputVectorsSerialize.toFile(iv, DefaultFileNames.SELETTORI_FILE);
 	}
 
 }

@@ -1,4 +1,4 @@
-package it.cvdlab.lar.pipeline.run;
+package it.cvdlab.lar.pipeline.run.utilities;
 
 import it.cvdlab.lar.model.OutputVectorsContainer;
 import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;

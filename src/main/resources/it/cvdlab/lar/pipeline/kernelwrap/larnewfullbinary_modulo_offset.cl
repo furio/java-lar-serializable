@@ -11,7 +11,7 @@
 __kernel void many_vec_mul_local_bitwise_binary(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices,
-          __global int * vectorBig,
+          __global const unsigned int * vectorBig,
           __global unsigned char * resultBig,
 		  int startVectorOffset,
           __local int * localVector)
@@ -22,7 +22,7 @@ __kernel void many_vec_mul_local_bitwise_binary(
 	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
   
   	// Shortcut al vettore locale del gruppo
-	__global const int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
+	__global const unsigned int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
 	__global unsigned char * result = resultBig + get_group_id(0) * ROWSIZE;
   
 	// Variabili riutilizzabili
@@ -51,8 +51,8 @@ __kernel void many_vec_mul_local_bitwise_binary(
 		row_end = row_indices[row+1];
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
-			bitToCheck = column_indices[i] - INTEGER_BIT_SIZE*(column_indices[i]/OLDVECTORSIZE);
-			dot_prod += ((localVector[ column_indices[i] / OLDVECTORSIZE ] & (1 << bitToCheck)) >> bitToCheck);
+			bitToCheck = column_indices[i] - INTEGER_BIT_SIZE*(column_indices[i]/INTEGER_BIT_SIZE);
+			dot_prod += ((localVector[ column_indices[i] / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}
 		result[ row ] = (unsigned char)(dot_prod & 1); // modulo 2
 	}
@@ -61,8 +61,8 @@ __kernel void many_vec_mul_local_bitwise_binary(
 __kernel void many_vec_mul_bitwise_binary(
           __global const unsigned int * row_indices,
           __global const unsigned int * column_indices,
-          __global int * vectorBig,
-          __global char * resultBig,
+          __global const unsigned int * vectorBig,
+          __global unsigned char * resultBig,
 		  int startVectorOffset)
 {
 	// Offset di moltiplicazione per riga
@@ -71,7 +71,7 @@ __kernel void many_vec_mul_bitwise_binary(
 	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
   
   	// Shortcut al vettore locale del gruppo
-	__global const int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
+	__global const unsigned int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
 	__global unsigned char * result = resultBig + get_group_id(0) * ROWSIZE;
   
 	// Variabili riutilizzabili
@@ -88,8 +88,8 @@ __kernel void many_vec_mul_bitwise_binary(
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
 			currCol = column_indices[i];
-			bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/OLDVECTORSIZE);
-			dot_prod += ((vector[ currCol / OLDVECTORSIZE ] & (1 << bitToCheck)) >> bitToCheck);
+			bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/INTEGER_BIT_SIZE);
+			dot_prod += ((vector[ currCol / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}
 		result[ row ] = (unsigned char)(dot_prod & 1); // modulo 2
 	}

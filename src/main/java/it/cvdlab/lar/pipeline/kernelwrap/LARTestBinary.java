@@ -32,8 +32,10 @@ import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinary {
 	private static DeviceFeature runOn = DeviceFeature.GPU;
+	private static int memDivisor = (runOn == DeviceFeature.CPU) ? 8 : 2;
+	
 	private static String KERNEL_FILE = "larnewfullbinary_modulo.cl";
-	private static String KERNEL_FUNCTION = "many_vec_mul_local_bitwise_binary"; // "many_vec_mul_local_bitwise_binary"
+	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise_binary"
 	
 	private static String D_ROWSIZE = "ROWSIZE";
 	private static String D_OLDVECTORSIZE = "OLDVECTORSIZE";
@@ -41,15 +43,22 @@ public class LARTestBinary {
 	private static String D_TOTALVECTORSSIZE = "TOTALVECTORSSIZE";
 	
 	private static long TOTAL_MEMORY = 0;
+	private static long RESULT_VECTOR_SIZE = 0;
+	private static long MAX_ALLOCATION = 0;
+	private static long MAX_ALLOCABLE_MEMORY = 0;
 
 	public static List<ResultTuple> clMultiply(CsrMatrix matrixA, int[] vector, int vectorSize, int oldVectorSize) {
 		int howManyVectors = vector.length / vectorSize;
+		int howManyResultVectors = 0;
 		System.out.println("Vector count: " + howManyVectors);
 		System.out.println("Single vector size: " + vectorSize);
 		System.out.println("Row count: " + matrixA.getRowCount());
 		
 		// Stora i risultati
 		List<ResultTuple> lsOutput = Lists.newArrayList();
+		
+		// Vettore risultato � grosso
+		RESULT_VECTOR_SIZE = matrixA.getRowCount();		
 
 		// Lista di CL buffer da deallocare
 		List<CLMem> buffersRelease = Lists.newArrayList();
@@ -74,7 +83,9 @@ public class LARTestBinary {
 		for (CLDevice currDev : context.getDevices()) {
 			maxWorkGroupSize = Math.min(maxWorkGroupSize, currDev.getMaxWorkGroupSize());
 			TOTAL_MEMORY += currDev.getGlobalMemSize();
+			MAX_ALLOCATION = currDev.getMaxMemAllocSize() / memDivisor;
 		}
+		System.out.println("Max Alloc Size: " + MAX_ALLOCATION);
 		System.out.println("Max Wg Size: " + maxWorkGroupSize);
 		System.out.println("TotalMemory: " + TOTAL_MEMORY);
 
@@ -117,9 +128,13 @@ public class LARTestBinary {
 					CLEngineConfig.isUSE_DEVICE_MEM());
 			buffersRelease.add(cl_vector_data);
 
-			// Output buffer
-			cl_output_data = context.createByteBuffer(Usage.Output,
-					matrixA.getRowCount() * howManyVectors);
+			MAX_ALLOCABLE_MEMORY = Math.min(MAX_ALLOCATION, TOTAL_MEMORY);
+			howManyResultVectors = (int) (MAX_ALLOCABLE_MEMORY/RESULT_VECTOR_SIZE);
+			// howManyResultVectors = 1;
+			System.out.println("Allocable memory: " + MAX_ALLOCABLE_MEMORY);
+			System.out.println("Computable vectors: " + howManyResultVectors);
+			System.out.println("Will allocate memory: " + ((long)matrixA.getRowCount()) * ((long)howManyResultVectors));
+			cl_output_data = context.createByteBuffer(Usage.Output, ((long)matrixA.getRowCount()) * ((long)howManyResultVectors));
 			buffersRelease.add(cl_output_data);
 		} catch (CLException e) {
 			queue.flush();

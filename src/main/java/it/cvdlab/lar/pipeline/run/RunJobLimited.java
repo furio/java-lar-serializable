@@ -9,7 +9,8 @@ import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;
 import it.cvdlab.lar.pipeline.helpers.ArrayUtils;
 import it.cvdlab.lar.pipeline.helpers.BinaryTranslator;
 import it.cvdlab.lar.pipeline.helpers.ResultTuple;
-import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinaryContinuos;
+import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinary;
+import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinaryJava;
 import it.cvdlab.lar.pipeline.run.utilities.DefaultFileNames;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import org.apache.commons.cli.ParseException;
 
 import com.google.common.collect.Lists;
 
-public class RunJob {
+public class RunJobLimited {
 	private static final String BORDO3_FILE = DefaultFileNames.BORDO3_FILE;
 	private static final String SELETTORI_FILE = DefaultFileNames.SELETTORI_FILE;
 	private static final String OUTPUT_FILE = DefaultFileNames.OUTPUT_FILE;
@@ -88,7 +89,10 @@ public class RunJob {
 		int bitSetLength = (int)Math.ceil((double)vectorLength / (double)Integer.SIZE);
 
 		System.out.println("Chiamata kernel");
-		List<ResultTuple> resultTuples = LARTestBinaryContinuos.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		System.out.println("New vLength: " + bitSetLength);
+		System.out.println("Old vLength: " + vectorLength);
+		// List<ResultTuple> resultTuples = LARTestBinaryJava.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
@@ -117,5 +121,5 @@ public class RunJob {
 		OutputVectorsSerialize.toFile(ov, outFile);
 	}
 	
-	private RunJob() {}
+	private RunJobLimited() {}
 }

@@ -1,4 +1,4 @@
-package it.cvdlab.lar.pipeline.run;
+package it.cvdlab.lar.pipeline.run.utilities;
 
 import it.cvdlab.lar.model.OutputVectorsContainer;
 import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;
@@ -12,7 +12,7 @@ import org.apache.commons.cli.ParseException;
 
 public class BinaryOutputVectorWriter {
 	private BinaryOutputVectorWriter() {}
-	private static final String INPUT_FILE = "output.json";
+	private static final String INPUT_FILE = DefaultFileNames.OUTPUT_FILE;
 	private static final String OUTPUT_FILE_EXT = ".bin";
 	
 	/**
