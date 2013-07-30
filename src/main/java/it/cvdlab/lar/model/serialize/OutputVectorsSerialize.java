@@ -37,6 +37,10 @@ public class OutputVectorsSerialize {
     }
     
     public static void toBinaryFile(OutputVectorsContainer input, String filePath) {
+    	toBinaryFile(input, filePath, false);
+    }
+    
+    public static void toBinaryFile(OutputVectorsContainer input, String filePath, boolean serializeOffsets) {
     	FileOutputStream fos = null;
     	
     	try {
@@ -47,17 +51,17 @@ public class OutputVectorsSerialize {
     		}
     		
     		// Serialize offset vettori
-    		/*
-    		ByteBuffer bfWrite = ByteBuffer.allocate(4);
-    		
-    		for(List<Integer> currList: input.getVectorOffset()) {
-    			for(Integer currInt : currList) {
-    				bfWrite.putInt(currInt);
-    				fos.write( bfWrite.array() );
-    				bfWrite.rewind();
-    			}
+    		if (serializeOffsets == true) {
+        		ByteBuffer bfWrite = ByteBuffer.allocate(4);
+        		
+        		for(List<Integer> currList: input.getVectorOffset()) {
+        			for(Integer currInt : currList) {
+        				bfWrite.putInt(currInt);
+        				fos.write( bfWrite.array() );
+        				bfWrite.rewind();
+        			}
+        		}    			
     		}
-    		*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {

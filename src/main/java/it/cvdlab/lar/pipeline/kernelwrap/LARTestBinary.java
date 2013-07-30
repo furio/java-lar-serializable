@@ -288,35 +288,4 @@ public class LARTestBinary {
 		}
 		listOfObjects.clear();
 	}
-
-/*
-	public static void main(String[] args) {
-		int[] matrixOne = new int[] { 1, 0, 0, 0, 1,
-									  0, 1, 0, 0, 0, 
-									  0, 0, 0, 0, 1, 
-									  0, 0, 1, 1, 0, 
-									  1, 0, 0, 0, 1 };
-		
-		CsrMatrix csrMatrixOne = CsrMatrix.fromFlattenArray(matrixOne, 5);
-		System.out.println(csrMatrixOne.toString());
-		
-		int[] vettori = new int[] { 1, 1, 1, 0, 1,
-										0, 1, 0, 0, 0,
-										0, 0, 1, 0, 0,
-										0, 0, 0, 1, 0,
-										0, 0, 0, 0, 1,
-										1, 1, 1, 0, 1};
-		
-		//clMultiply(csrMatrixOne, vettori, 5);
-		
-		// System.out.println(Integer.SIZE);
-
-		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromFlatArray(vettori, 5));
-		System.out.println(Arrays.toString(flatResult));
-		
-		clMultiply(csrMatrixOne, flatResult, 1, 5);
-	}
-*/
-	
-
 }

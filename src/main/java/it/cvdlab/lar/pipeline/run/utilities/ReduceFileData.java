@@ -23,6 +23,7 @@ public class ReduceFileData {
 
 	}
 	
+	@SuppressWarnings("unused")
 	private static void cutInput() {
 		System.out.println("Deserializzo");
 		InputVectorsContainer ivc = InputVectorsSerialize.fromFile(INPUT_FILE);

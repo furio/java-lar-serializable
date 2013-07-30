@@ -23,7 +23,6 @@ public class LARTestBinaryJava {
 		// program.addBuildOption("-D" + D_INPUTVECTORSIZE + "=" + vectorSize);
 		// program.addBuildOption("-D" + D_TOTALVECTORSSIZE + "=" + howManyVectors);		
 		int INTEGER_BIT_SIZE = 32;
-		int OLDVECTORSIZE = oldVectorSize;
 		
 		List<Byte> bResult; 
 		for(int j = 0; j < howManyVectors; ++j) {
@@ -37,6 +36,7 @@ public class LARTestBinaryJava {
 				for (int i = matrixA.getRowPointer().get(row); i < row_end; ++i) {
 					int currCol = matrixA.getColumnIndices().get(i);
 					int bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/INTEGER_BIT_SIZE);
+					// >>> is logical shift (avoid carrying the sign)
 					int tmpRes = ((localVector[ currCol / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >>> bitToCheck);
 					
 					dot_prod += tmpRes;
@@ -46,12 +46,12 @@ public class LARTestBinaryJava {
 			}
 			
 			lsOutput.add(new ResultTuple(bResult, 1, 0));
+			
+			if ((j % 64) == 0) {
+				System.out.println("Computed " + j + " vectors");
+			}
 		}
-		
-		
 
 		return lsOutput;
 	}
-
-
 }
