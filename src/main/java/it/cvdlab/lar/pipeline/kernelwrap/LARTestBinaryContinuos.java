@@ -186,7 +186,7 @@ public class LARTestBinaryContinuos {
 		
 		int vectorsToCompute = howManyVectors;
 		for(int i = 0; i < howManyVectors; i += howManyResultVectors, vectorsToCompute -= howManyResultVectors) {
-			System.err.println("Create kernel " + "["+i+"]" + "["+vectorsToCompute+"]");
+			System.err.println("Create kernel " + "["+i+"]" + "["+howManyResultVectors+"]" + "["+vectorsToCompute+"]");
 			multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
 			
 			if (KERNEL_FUNCTION.indexOf("local") != -1) {
@@ -220,7 +220,7 @@ public class LARTestBinaryContinuos {
 				queue.finish();				
 			}
 			
-			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
+			System.err.println("WgSize: " + wgSize[0] + " ("+multipleGroupSize+") - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
 			
 			CLEvent addEvt = null;
 			long kernelTime = System.currentTimeMillis();

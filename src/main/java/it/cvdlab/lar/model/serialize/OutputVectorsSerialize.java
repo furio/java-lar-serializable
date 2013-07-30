@@ -47,6 +47,7 @@ public class OutputVectorsSerialize {
     		}
     		
     		// Serialize offset vettori
+    		/*
     		ByteBuffer bfWrite = ByteBuffer.allocate(4);
     		
     		for(List<Integer> currList: input.getVectorOffset()) {
@@ -56,6 +57,7 @@ public class OutputVectorsSerialize {
     				bfWrite.rewind();
     			}
     		}
+    		*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {

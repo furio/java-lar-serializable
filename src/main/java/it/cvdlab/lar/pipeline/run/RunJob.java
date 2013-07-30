@@ -96,21 +96,21 @@ public class RunJob {
 		
 		OutputVectorsContainer ov = new OutputVectorsContainer();
 		ov.setVectorOffset(ivc.getVectorOffset());
-		List<List<Byte>> resultsAnnidated = Lists.newArrayListWithCapacity(vectorsCount);
+		List<List<Byte>> resultsAnnidated = Lists.newArrayList();
 		
-		System.out.println("Conversione risultati");
+		System.out.println("Conversione risultati di " + vectorsCount + " vettori");
 		List<Byte> result;
 		long totalElapsed = 0;
 		for(ResultTuple rtCurr: resultTuples) {
 			result = rtCurr.getDataOutput();
 			totalElapsed += rtCurr.getElapsedTime();
-			
+			System.out.println("-- Converting " + rtCurr.getVectorsQty() + " vectors");
 			for(int i = 0; i < rtCurr.getVectorsQty(); i++) {
 				List<Byte> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
 				for(int j = 0; j < b3.getRowCount(); j++) {
 					currList.add( result.get(i*b3.getRowCount() + j) );
 				}
-				resultsAnnidated.add(i, currList);
+				resultsAnnidated.add(currList);
 			}
 		}
 

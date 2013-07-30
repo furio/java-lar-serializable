@@ -25,6 +25,8 @@ __kernel void many_vec_mul_local_bitwise_binary(
 	__global const unsigned int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
 	__global unsigned char * result = resultBig + get_group_id(0) * ROWSIZE;
   
+  	barrier(CLK_GLOBAL_MEM_FENCE);
+  	
 	// Variabili riutilizzabili
 	unsigned int row;
 	unsigned int row_end;
@@ -74,6 +76,8 @@ __kernel void many_vec_mul_bitwise_binary(
 	__global const unsigned int * vector = vectorBig + (get_group_id(0) + startVectorOffset) * INPUTVECTORSIZE;
 	__global unsigned char * result = resultBig + get_group_id(0) * ROWSIZE;
   
+  	barrier(CLK_GLOBAL_MEM_FENCE);
+  	
 	// Variabili riutilizzabili
 	unsigned int row;
 	unsigned int row_end;
