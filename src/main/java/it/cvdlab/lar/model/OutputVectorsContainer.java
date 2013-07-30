@@ -11,11 +11,11 @@ import org.slf4j.LoggerFactory;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class OutputVectorsContainer {
 
-	@JsonProperty("lista_vettori")
-	private List<List<Byte>> vectorList;
-
 	@JsonProperty("lista_offset")
 	private List<List<Integer>> vectorOffset;
+	
+	@JsonProperty("lista_vettori")
+	private List<List<Byte>> vectorList;
 	
 	@JsonProperty("bench")
 	private List<Long> vectorStats;	
