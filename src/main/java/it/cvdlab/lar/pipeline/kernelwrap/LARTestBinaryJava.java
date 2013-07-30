@@ -25,9 +25,9 @@ public class LARTestBinaryJava {
 		int INTEGER_BIT_SIZE = 32;
 		int OLDVECTORSIZE = oldVectorSize;
 		
-		List<Byte> bResult = Lists.newArrayList();
+		List<Byte> bResult; 
 		for(int j = 0; j < howManyVectors; ++j) {
-			
+			bResult = Lists.newArrayList();
 			int[] localVector = Arrays.copyOfRange(vector, j*vectorSize, j*vectorSize + vectorSize);
 			// System.out.println(Arrays.toString(localVector));
 			for (int row = 0; row < matrixA.getRowCount(); ++row) {
@@ -44,9 +44,11 @@ public class LARTestBinaryJava {
 				
 				bResult.add( (byte)(dot_prod % 2) );
 			}
+			
+			lsOutput.add(new ResultTuple(bResult, 1, 0));
 		}
 		
-		lsOutput.add(new ResultTuple(bResult, howManyVectors, 0));
+		
 
 		return lsOutput;
 	}
