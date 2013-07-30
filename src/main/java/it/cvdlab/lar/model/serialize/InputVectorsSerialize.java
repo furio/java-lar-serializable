@@ -4,8 +4,6 @@ import it.cvdlab.lar.model.InputVectorsContainer;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -18,8 +16,7 @@ public class InputVectorsSerialize {
     	InputVectorsContainer output = null;
     	
     	try {
-			String jsonMatrix = new String(Files.readAllBytes(Paths.get(filePath)));
-			output = jacksonMapper.readValue(jsonMatrix, InputVectorsContainer.class);
+    		output = jacksonMapper.readValue(new File(filePath), InputVectorsContainer.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

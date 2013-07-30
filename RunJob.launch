@@ -15,5 +15,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="it.cvdlab.lar.pipeline.run.RunJob"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="lar-serializable"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xcheck:jni -Xmx14100m"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -Xcheck:jni -Xmx13G -XX:MaxPermSize=4G -XX:PermSize=512M"/>
 </launchConfiguration>
