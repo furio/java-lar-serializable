@@ -9,7 +9,6 @@ import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;
 import it.cvdlab.lar.pipeline.helpers.ArrayUtils;
 import it.cvdlab.lar.pipeline.helpers.BinaryTranslator;
 import it.cvdlab.lar.pipeline.helpers.ResultTuple;
-import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinary;
 import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinaryJava;
 import it.cvdlab.lar.pipeline.run.utilities.DefaultFileNames;
 
