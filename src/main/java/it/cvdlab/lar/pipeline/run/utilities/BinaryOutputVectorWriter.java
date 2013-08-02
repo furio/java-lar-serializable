@@ -13,6 +13,7 @@ import org.apache.commons.cli.ParseException;
 public class BinaryOutputVectorWriter {
 	private BinaryOutputVectorWriter() {}
 	private static final String INPUT_FILE = DefaultFileNames.OUTPUT_FILE;
+	private static final boolean SERIALIZE_OFFSETS = false;
 	private static final String OUTPUT_FILE_EXT = ".bin";
 	
 	/**
@@ -21,6 +22,7 @@ public class BinaryOutputVectorWriter {
 	public static void main(String[] args) {
 		Options cmdLineOptions = new Options();
 		cmdLineOptions.addOption("i", "input", true, "input file to convert. Default: " + INPUT_FILE);
+		cmdLineOptions.addOption("o", "offset", false, "serialize offsets. Default: " + SERIALIZE_OFFSETS);
 		cmdLineOptions.addOption("h", "help", false, "print help");
 		
 		CommandLineParser parser = new GnuParser();
@@ -35,21 +37,25 @@ public class BinaryOutputVectorWriter {
 		
 		if (cmd.hasOption("h")) {
 			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "OutputComparer", cmdLineOptions );
+			formatter.printHelp( "BinaryOutputVectorWriter", cmdLineOptions );
 			return;
 		}
 		
 		String input = INPUT_FILE;
+		boolean serializeOffsets = SERIALIZE_OFFSETS;
 		
 		if (cmd.hasOption("i")) {
 			input = cmd.getOptionValue("i");
 		}
 		
+		if (cmd.hasOption("o")) {
+			serializeOffsets = true;
+		}		
+		
 		System.out.println("Reading/parsing file: " + input);
 		OutputVectorsContainer ovInput = OutputVectorsSerialize.fromFile(input);		
 
 		System.out.println("Writing binary file: " + input + OUTPUT_FILE_EXT);
-		OutputVectorsSerialize.toBinaryFile(ovInput, input + OUTPUT_FILE_EXT);
+		OutputVectorsSerialize.toBinaryFile(ovInput, input + OUTPUT_FILE_EXT, serializeOffsets);
 	}
-
 }

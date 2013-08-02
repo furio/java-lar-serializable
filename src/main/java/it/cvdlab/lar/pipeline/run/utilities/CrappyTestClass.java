@@ -1,18 +1,16 @@
 package it.cvdlab.lar.pipeline.run.utilities;
 
+import it.cvdlab.lar.pipeline.helpers.cuda.CudaDeviceStats;
+import it.cvdlab.lar.pipeline.helpers.cuda.CudaQuery;
+
+
 public class CrappyTestClass {
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
-		System.out.println((64*64*64 - 1) / 32);
-
+		for(CudaDeviceStats cCurr: CudaQuery.getDevicesInfos()) {
+			System.out.println(cCurr);
+		}
 	}
-
-}
-
-
 /*
 	public static void main(String[] args) {
 		int[] matrixOne = new int[] { 1, 0, 0, 0, 1,
@@ -41,3 +39,5 @@ public class CrappyTestClass {
 		clMultiply(csrMatrixOne, flatResult, 1, 5);
 	}
 */
+	
+}
