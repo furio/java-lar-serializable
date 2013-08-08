@@ -8,16 +8,18 @@ import java.util.Map;
 
 import org.bridj.Pointer;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.nativelibs4java.opencl.CLBuffer;
 import com.nativelibs4java.opencl.CLContext;
 import com.nativelibs4java.opencl.CLDevice;
 import com.nativelibs4java.opencl.CLEvent;
 import com.nativelibs4java.opencl.CLKernel;
 import com.nativelibs4java.opencl.CLMem;
+import com.nativelibs4java.opencl.CLMem.Usage;
+import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.opencl.CLProgram;
 import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.JavaCL;
-import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
 import com.nativelibs4java.util.IOUtils;
 
 public abstract class RunningKernel {
@@ -32,9 +34,9 @@ public abstract class RunningKernel {
 	private boolean copyToDevice;
 	
 	// To release stuff
-	private List<CLMem> buffersRelease;
-	@SuppressWarnings("rawtypes")
-	private List<Pointer> pointersRelease;
+	private Map<String,CLMem> buffersRelease;
+	private PointerMap pointersRelease;
+	
 	private CLContext context;
 	private CLQueue queue;
 	private ByteOrder byteOrder;
@@ -51,10 +53,11 @@ public abstract class RunningKernel {
 	private String kernelSource;
 	
 	RunningKernel() {
-		buffersRelease = Lists.newArrayList();
-		pointersRelease = Lists.newArrayList();
-		runOn = DeviceFeature.GPU;
-		copyToDevice = (runOn == DeviceFeature.CPU);
+		super();
+		//
+		buffersRelease = Maps.newHashMap();
+		pointersRelease = null;
+		setRunOn(DeviceFeature.GPU);
 		//
 		context = null;
 		queue = null;
@@ -66,11 +69,30 @@ public abstract class RunningKernel {
 	}
 	
 	RunningKernel(DeviceFeature selectedFeature) {
-		super();
-		runOn = selectedFeature;
-		copyToDevice = (runOn == DeviceFeature.CPU);
+		this();
+		setRunOn(selectedFeature);
+	}
+	
+	long getAvailableMemory() {
+		return availableMemory;
+	}
+
+	long getMaxAllocation() {
+		return maxAllocation;
+	}
+
+	long getMaxWorkGroupSize() {
+		return maxWorkGroupSize;
+	}
+
+	long getMaxKernelWorkgroupSize() {
+		return maxKernelWorkgroupSize;
 	}	
 	
+	private void setRunOn(DeviceFeature dv) {
+		runOn = dv;
+		copyToDevice = (runOn == DeviceFeature.CPU);
+	}
 	
 	boolean initContext() {
 		this.context = JavaCL.createBestContext(runOn);
@@ -109,6 +131,10 @@ public abstract class RunningKernel {
 		}
 		
 		this.byteOrder = context.getByteOrder();
+		
+		// init pointers
+		this.pointersRelease= new PointerMap();  
+		
 		return true;
 	}
 
@@ -204,7 +230,6 @@ public abstract class RunningKernel {
 		}
 	}
 	
-	
 	boolean initKernel(String kernelFunction, Object ... args) {
 		if ( this.program == null ) {
 			return false;
@@ -215,6 +240,22 @@ public abstract class RunningKernel {
 		getkernelStats();
 		
 		return true;
+	}
+	
+	void resetKernelAndProgram() {
+		if ( kernel != null ) {
+			kernel.release();
+			
+			kernel = null;
+		}
+		
+		if ( program != null ) {
+			program.release();
+			
+			program = null;
+		}
+		
+		this.maxKernelWorkgroupSize = this.maxWorkGroupSize;
 	}
 	
 	private void getkernelStats() {
@@ -236,7 +277,135 @@ public abstract class RunningKernel {
 	
 	
 	// TODO: pointer and buffer alloc
+	Pointer<Integer> createNewPointerInteger(String key, long length) {
+		Pointer<Integer> currPtr = Pointer.allocateInts(length).order(byteOrder);
+		if (pointersRelease.setPointerInteger(key, currPtr) != null) {
+			currPtr.release();
+			return null;
+		}
+		
+		return currPtr;
+	}
 	
+	Pointer<Float> createNewPointerFloat(String key, long length) {
+		Pointer<Float> currPtr = Pointer.allocateFloats(length).order(byteOrder);
+		if (pointersRelease.setPointerFloat(key, currPtr) != null) {
+			currPtr.release();
+			return null;
+		}
+		
+		return currPtr;
+	}
+	
+	Pointer<Byte> createNewPointerByte(String key, long length) {
+		Pointer<Byte> currPtr = Pointer.allocateBytes(length).order(byteOrder);
+		if (pointersRelease.setPointerByte(key, currPtr) != null) {
+			currPtr.release();
+			return null;
+		}
+		
+		return currPtr;
+	}
+	
+	Pointer<Integer> getPointerInteger(String key) {
+		return this.pointersRelease.getPointerInteger(key);
+	}
+	
+	Pointer<Float> getPointerFloat(String key) {
+		return this.pointersRelease.getPointerFloat(key);
+	}
+	
+	Pointer<Byte> getPointerByte(String key) {
+		return this.pointersRelease.getPointerByte(key);
+	}		
+	
+	CLMem createInputMemoryBuffer(String pointerKey) {
+		@SuppressWarnings("rawtypes")
+		Pointer currPtr = getPointerInteger(pointerKey);
+		
+		if (currPtr != null) {
+			return this.buffersRelease.put(pointerKey, setupInputIntegerBuffer(getPointerInteger(pointerKey)) );
+		}
+		
+		currPtr = getPointerFloat(pointerKey);
+		if (currPtr != null) {
+			return this.buffersRelease.put(pointerKey, setupInputFloatBuffer(getPointerFloat(pointerKey)) );
+		}
+		
+		currPtr = getPointerByte(pointerKey);
+		if (currPtr != null) {
+			return this.buffersRelease.put(pointerKey, setupInputByteBuffer(getPointerByte(pointerKey)) );
+		}		
+		
+		
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Integer>  createOutputMemoryBufferInteger(String key, long len) {
+		if (this.buffersRelease.containsKey(key)) {
+			return null;
+		}
+		
+		return (CLBuffer<Integer>) this.buffersRelease.put(key, setupOutputIntegerBuffer(len) );
+	}
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Float> createOutputMemoryBufferFloat(String key, long len) {
+		if (this.buffersRelease.containsKey(key)) {
+			return null;
+		}
+		
+		return (CLBuffer<Float>) this.buffersRelease.put(key, setupOutputFloatBuffer(len) );
+	}
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Byte> createOutputMemoryBufferByte(String key, long len) {
+		if (this.buffersRelease.containsKey(key)) {
+			return null;
+		}
+		
+		return (CLBuffer<Byte>) this.buffersRelease.put(key, setupOutputByteBuffer(len) );
+	}	
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Integer> getBufferInteger(String key) {
+		return (CLBuffer<Integer>) this.buffersRelease.get(key);
+	}
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Float> getBufferFloat(String key) {
+		return (CLBuffer<Float>) this.buffersRelease.get(key);
+	}
+	
+	@SuppressWarnings("unchecked")
+	CLBuffer<Byte> getBufferByte(String key) {
+		return (CLBuffer<Byte>) this.buffersRelease.get(key);
+	}	
+	
+	private CLBuffer<Integer> setupInputIntegerBuffer(Pointer<Integer> origin) {
+		return context.createBuffer(Usage.Input, origin, copyToDevice);
+	}
+	
+	private CLBuffer<Float> setupInputFloatBuffer(Pointer<Float> origin) {
+		return context.createBuffer(Usage.Input, origin, copyToDevice);
+	}
+	
+	private CLBuffer<Byte> setupInputByteBuffer(Pointer<Byte> origin) {
+		return context.createBuffer(Usage.Input, origin, copyToDevice);
+	}
+	
+	private CLBuffer<Integer> setupOutputIntegerBuffer(long length) {
+		return context.createIntBuffer(Usage.Output, length);
+	}
+	
+	private CLBuffer<Float> setupOutputFloatBuffer(long length) {
+		return context.createFloatBuffer(Usage.Output, length);
+	}
+	
+	private CLBuffer<Byte> setupOutputByteBuffer(long length) {
+		return context.createByteBuffer(Usage.Output, length);
+	}	
 	
 	private void clearAllocatedObjects() {
 		if (queue != null) {
@@ -246,17 +415,7 @@ public abstract class RunningKernel {
 			queue = null;
 		}
 
-		if ( kernel != null ) {
-			kernel.release();
-			
-			kernel = null;
-		}
-		
-		if ( program != null ) {
-			program.release();
-			
-			program = null;
-		}
+		resetKernelAndProgram();
 		
 		clearAllocatedCLObjects();
 		clearAllocatedPTRObjects();
@@ -274,18 +433,74 @@ public abstract class RunningKernel {
 	
 	private void clearAllocatedCLObjects() {
 		System.err.println("Clearing CLMEM");
-		for (CLMem buffObject : buffersRelease) {
-			buffObject.release();
+		for(String buffObject: this.buffersRelease.keySet()) {
+			this.buffersRelease.get(buffObject).release();
 		}
-		buffersRelease.clear();
+		this.buffersRelease.clear();
 	}
 
-	@SuppressWarnings("rawtypes")
 	private void clearAllocatedPTRObjects() {
 		System.err.println("Clearing POINTERS");
-		for (Pointer buffObject : pointersRelease) {
-			buffObject.release();
-		}
-		pointersRelease.clear();
+		this.pointersRelease.clearAllocatedPTRObjects();
 	}		
+}
+
+class PointerMap {
+	private Map<String, Pointer<Integer>> integerMap;
+	private Map<String, Pointer<Float>> floatMap;
+	private Map<String, Pointer<Byte>> byteMap;
+	
+	
+	PointerMap() {
+		super();
+		integerMap = Maps.newHashMap();
+		floatMap = Maps.newHashMap();
+		byteMap = Maps.newHashMap();
+	}
+	
+	private boolean checkKeyUniqueness(String key) {
+		return !(this.integerMap.containsKey(key) || this.floatMap.containsKey(key) || this.byteMap.containsKey(key));
+	}
+	
+	Pointer<Integer> setPointerInteger(String key, Pointer<Integer> ptr) {
+		return checkKeyUniqueness(key) ? this.integerMap.put(key,ptr) : null;
+	}
+	
+	Pointer<Float> setPointerFloat(String key, Pointer<Float> ptr) {
+		return checkKeyUniqueness(key) ? this.floatMap.put(key,ptr) : null;
+	}
+	
+	Pointer<Byte> setPointerByte(String key, Pointer<Byte> ptr) {
+		return checkKeyUniqueness(key) ? this.byteMap.put(key,ptr) : null;
+	}	
+	
+	Pointer<Integer> getPointerInteger(String key) {
+		return this.integerMap.get(key);
+	}
+	
+	Pointer<Float> getPointerFloat(String key) {
+		return this.floatMap.get(key);
+	}
+	
+	Pointer<Byte> getPointerByte(String key) {
+		return this.byteMap.get(key);
+	}	
+	
+	void clearAllocatedPTRObjects() {
+		for(String buffObject: integerMap.keySet()) {
+			integerMap.get(buffObject).release();
+		}
+		
+		for(String buffObject: floatMap.keySet()) {
+			integerMap.get(buffObject).release();
+		}
+		
+		for(String buffObject: byteMap.keySet()) {
+			integerMap.get(buffObject).release();
+		}		
+		
+		integerMap.clear();
+		floatMap.clear();
+		byteMap.clear();
+	}
 }
