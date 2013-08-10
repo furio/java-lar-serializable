@@ -13,7 +13,7 @@ __kernel void many_vec_mul_local_bitwise_binary(
           __global const unsigned int * column_indices,
           __global const unsigned int * vectorBig,
           __global unsigned char * resultBig,
-		  int startVectorOffset,
+		  const int startVectorOffset,
           __local int * localVector)
 {
 	// Offset di moltiplicazione per riga
@@ -53,6 +53,7 @@ __kernel void many_vec_mul_local_bitwise_binary(
 		row_end = row_indices[row+1];
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
+			// should be: currCol >> log2(INTEGER_BIT_SIZE)
 			bitToCheck = column_indices[i] - INTEGER_BIT_SIZE*(column_indices[i]/INTEGER_BIT_SIZE);
 			dot_prod += ((localVector[ column_indices[i] / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}
@@ -65,7 +66,7 @@ __kernel void many_vec_mul_bitwise_binary(
           __global const unsigned int * column_indices,
           __global const unsigned int * vectorBig,
           __global unsigned char * resultBig,
-		  int startVectorOffset)
+		  const int startVectorOffset)
 {
 	// Offset di moltiplicazione per riga
 	unsigned int work_per_item = max((uint) (ROWSIZE / get_local_size(0)), (uint) 1);
@@ -92,6 +93,7 @@ __kernel void many_vec_mul_bitwise_binary(
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
 			currCol = column_indices[i];
+			// should be: currCol >> log2(INTEGER_BIT_SIZE)
 			bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/INTEGER_BIT_SIZE);
 			dot_prod += ((vector[ currCol / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}

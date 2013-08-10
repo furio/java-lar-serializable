@@ -1,4 +1,6 @@
-package it.cvdlab.lar.pipeline.kernelwrap;
+package it.cvdlab.lar.pipeline.kernelwrap.experimental;
+
+import it.cvdlab.lar.model.helpers.PointerUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -27,6 +29,42 @@ public abstract class RunningKernel {
 	private static String KERNEL_KEYWORD = "__kernel";
 	private boolean CALL_GC_COLLECT = false;
 	
+	enum BufferType {
+		Integer(Integer.class),
+		Float(Float.class),
+		Byte(Byte.class);
+		
+		@SuppressWarnings("rawtypes")
+		private Class value;
+		
+		private BufferType(@SuppressWarnings("rawtypes") Class value) {
+			this.value = value;
+		}
+		
+		@SuppressWarnings("rawtypes")
+		Class value() {
+			return value;
+		}
+	}
+	
+	private class TupleBuffer<T> {
+		private BufferType type;
+		private T buffer;
+		
+		TupleBuffer(BufferType btType, T mBuffer) {
+			type = btType;
+			buffer = mBuffer;
+		}
+		
+		BufferType getType() {
+			return type;
+		}
+
+		T getBuffer() {
+			return buffer;
+		}		
+	}
+	
 	// Running where
 	private DeviceFeature runOn;
 	
@@ -34,14 +72,20 @@ public abstract class RunningKernel {
 	private boolean copyToDevice;
 	
 	// To release stuff
-	private Map<String,CLMem> buffersRelease;
-	private PointerMap pointersRelease;
+	private Map<String,TupleBuffer<CLMem>> buffersRelease;
+	@SuppressWarnings("rawtypes")
+	private Map<String,TupleBuffer<Pointer>> pointersRelease;
 	
 	private CLContext context;
 	private CLQueue queue;
 	private ByteOrder byteOrder;
 	private CLProgram program;
 	private CLKernel kernel;
+	
+	CLQueue getQueue() {
+		// TODO remove and put memory copy inside this class
+		return queue;
+	}	
 
 	// stats stuff
 	private long availableMemory;
@@ -133,7 +177,7 @@ public abstract class RunningKernel {
 		this.byteOrder = context.getByteOrder();
 		
 		// init pointers
-		this.pointersRelease= new PointerMap();  
+		this.pointersRelease = Maps.newHashMap();  
 		
 		return true;
 	}
@@ -193,8 +237,14 @@ public abstract class RunningKernel {
 		}
 		
 		this.program = this.context.createProgram(this.kernelSource);
-		addDefines(definesMap);
-		addBuildOptions(options);
+		
+		if (definesMap != null) {
+			addDefines(definesMap);
+		}
+		
+		if (options != null) {
+			addBuildOptions(options);
+		}
 		
 		return true;
 	}
@@ -230,14 +280,29 @@ public abstract class RunningKernel {
 		}
 	}
 	
-	boolean initKernel(String kernelFunction, Object ... args) {
+	boolean initKernel(String kernelFunction) {
 		if ( this.program == null ) {
 			return false;
 		}
 		
 		this.kernel = program.createKernel(kernelFunction);
-		this.kernel.setArgs(args);
 		getkernelStats();
+		
+		return true;
+	}
+	
+	void setKernelArgs(Object ... args) {
+		if (this.kernel != null) {
+			this.kernel.setArgs(args);
+		}
+	}
+	
+	boolean initKernel(String kernelFunction, Object ... args) {
+		if ( !initKernel(kernelFunction) ) {
+			return false;
+		}
+		
+		setKernelArgs(args);
 		
 		return true;
 	}
@@ -275,136 +340,182 @@ public abstract class RunningKernel {
 		}
 	}
 	
+	private <T extends Number> Pointer<T> createNewPointer(long length, Class<T> type) {
+		return Pointer.allocateArray(type, length).order(byteOrder);
+	}
 	
-	// TODO: pointer and buffer alloc
+	@SuppressWarnings("unchecked")
+	<T> Pointer<T> createNewPointer(long length, BufferType dataType) {
+		return createNewPointer(length, dataType.value());
+	}
+	
+	@SuppressWarnings({ "rawtypes" })
+	private <T extends Number> Pointer<T> setPointer(String key, Pointer<T> pointerData, BufferType btType) {
+		if (this.pointersRelease.containsKey(key)) {
+			return null;
+		}
+		
+		this.pointersRelease.put(key, new TupleBuffer<Pointer>(btType, pointerData));
+		
+		return pointerData; 
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private Pointer createNewPointer(String key, long length, BufferType bType) {
+		Pointer currPtr = createNewPointer(length, bType.value() );
+		if (setPointer(key, currPtr, bType) != null) {
+			currPtr.release();
+			return null;
+		}
+		
+		return currPtr;
+	}
+
+	Pointer<Integer> createNewPointerInteger(String key, List<Integer> data) {
+		Pointer<Integer> currPtr = createNewPointerInteger(key, data.size());
+		if (currPtr == null) {
+			return null;
+		}
+		
+		PointerUtils.copyToPointer(data, currPtr);
+		return currPtr;
+	}
+	
+	@SuppressWarnings("unchecked")
 	Pointer<Integer> createNewPointerInteger(String key, long length) {
-		Pointer<Integer> currPtr = Pointer.allocateInts(length).order(byteOrder);
-		if (pointersRelease.setPointerInteger(key, currPtr) != null) {
-			currPtr.release();
+		return createNewPointer(key, length, BufferType.Integer);
+	}
+	
+	Pointer<Float> createNewPointerFloat(String key, List<Float> data) {
+		Pointer<Float> currPtr = createNewPointerFloat(key, data.size());
+		if (currPtr == null) {
 			return null;
 		}
 		
+		PointerUtils.copyToPointer(data, currPtr);
 		return currPtr;
-	}
+	}	
 	
+	@SuppressWarnings("unchecked")
 	Pointer<Float> createNewPointerFloat(String key, long length) {
-		Pointer<Float> currPtr = Pointer.allocateFloats(length).order(byteOrder);
-		if (pointersRelease.setPointerFloat(key, currPtr) != null) {
-			currPtr.release();
-			return null;
-		}
-		
-		return currPtr;
+		return createNewPointer(key, length, BufferType.Float);
 	}
 	
-	Pointer<Byte> createNewPointerByte(String key, long length) {
-		Pointer<Byte> currPtr = Pointer.allocateBytes(length).order(byteOrder);
-		if (pointersRelease.setPointerByte(key, currPtr) != null) {
-			currPtr.release();
+	Pointer<Byte> createNewPointerByte(String key, List<Byte> data) {
+		Pointer<Byte> currPtr = createNewPointerByte(key, data.size());
+		if (currPtr == null) {
 			return null;
 		}
 		
+		PointerUtils.copyToPointer(data, currPtr);
 		return currPtr;
+	}		
+	
+	@SuppressWarnings("unchecked")
+	Pointer<Byte> createNewPointerByte(String key, long length) {
+		return createNewPointer(key, length, BufferType.Byte);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T extends Number> Pointer<T> getPointer(String key) {
+		return (Pointer<T>) this.pointersRelease.get(key).getBuffer();
 	}
 	
 	Pointer<Integer> getPointerInteger(String key) {
-		return this.pointersRelease.getPointerInteger(key);
+		return getPointer(key);
 	}
 	
 	Pointer<Float> getPointerFloat(String key) {
-		return this.pointersRelease.getPointerFloat(key);
+		return getPointer(key);
 	}
 	
 	Pointer<Byte> getPointerByte(String key) {
-		return this.pointersRelease.getPointerByte(key);
+		return getPointer(key);
 	}		
 	
+	private <T extends Number> CLBuffer<T> setupInputBuffer(Pointer<T> origin) {
+		return context.createBuffer(Usage.InputOutput, origin, copyToDevice);
+	}
+	
+	private <T extends Number> CLBuffer<T> setupOutputBuffer(long length, Class<T> inputType) {
+		return context.createBuffer(Usage.Output, inputType, length);
+	}
+	
+	@SuppressWarnings("rawtypes")
 	CLMem createInputMemoryBuffer(String pointerKey) {
-		@SuppressWarnings("rawtypes")
-		Pointer currPtr = getPointerInteger(pointerKey);
-		
-		if (currPtr != null) {
-			return this.buffersRelease.put(pointerKey, setupInputIntegerBuffer(getPointerInteger(pointerKey)) );
+		TupleBuffer<Pointer> ptrCurr = this.pointersRelease.get(pointerKey);
+		if (ptrCurr == null) {
+			return null;
 		}
 		
-		currPtr = getPointerFloat(pointerKey);
-		if (currPtr != null) {
-			return this.buffersRelease.put(pointerKey, setupInputFloatBuffer(getPointerFloat(pointerKey)) );
+		switch(ptrCurr.getType()) {
+			case Integer:
+				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerInteger(pointerKey))));
+				
+			case Float:
+				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerFloat(pointerKey)))).getBuffer();
+				
+			case Byte:
+				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerByte(pointerKey)))).getBuffer();				
+		}
+
+		return this.buffersRelease.get(pointerKey).getBuffer();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private CLMem createOutputMemoryBuffer(String key, long len, BufferType bType) {
+		if (this.buffersRelease.containsKey(key)) {
+			return null;
 		}
 		
-		currPtr = getPointerByte(pointerKey);
-		if (currPtr != null) {
-			return this.buffersRelease.put(pointerKey, setupInputByteBuffer(getPointerByte(pointerKey)) );
-		}		
-		
-		
-		return null;
+		this.buffersRelease.put(key,new TupleBuffer<CLMem>( bType, setupOutputBuffer(len, bType.value()) ));
+		return this.buffersRelease.get(key).getBuffer();
 	}
 	
 	@SuppressWarnings("unchecked")
 	CLBuffer<Integer>  createOutputMemoryBufferInteger(String key, long len) {
-		if (this.buffersRelease.containsKey(key)) {
-			return null;
-		}
-		
-		return (CLBuffer<Integer>) this.buffersRelease.put(key, setupOutputIntegerBuffer(len) );
+		return (CLBuffer<Integer>) createOutputMemoryBuffer(key, len, BufferType.Integer);
 	}
 	
 	@SuppressWarnings("unchecked")
 	CLBuffer<Float> createOutputMemoryBufferFloat(String key, long len) {
-		if (this.buffersRelease.containsKey(key)) {
-			return null;
-		}
-		
-		return (CLBuffer<Float>) this.buffersRelease.put(key, setupOutputFloatBuffer(len) );
+		return (CLBuffer<Float>) createOutputMemoryBuffer(key, len, BufferType.Float);
 	}
 	
 	@SuppressWarnings("unchecked")
 	CLBuffer<Byte> createOutputMemoryBufferByte(String key, long len) {
-		if (this.buffersRelease.containsKey(key)) {
-			return null;
+		return (CLBuffer<Byte>) createOutputMemoryBuffer(key, len, BufferType.Byte);
+	}	
+	
+	@SuppressWarnings("unchecked")
+	private <T extends Number> CLBuffer<T> getBuffer(String key) {
+		return (CLBuffer<T>) this.buffersRelease.get(key).getBuffer();
+	}
+	
+	CLBuffer<Integer> getBufferInteger(String key) {
+		return getBuffer(key);
+	}
+	
+	CLBuffer<Float> getBufferFloat(String key) {
+		return getBuffer(key);
+	}
+	
+	CLBuffer<Byte> getBufferByte(String key) {
+		return getBuffer(key);
+	}
+	
+	void releaseAll(CLEvent ... events) {
+		if (events != null) {
+			for(CLEvent event : events) {
+				event.release();
+			}			
 		}
 		
-		return (CLBuffer<Byte>) this.buffersRelease.put(key, setupOutputByteBuffer(len) );
-	}	
-	
-	@SuppressWarnings("unchecked")
-	CLBuffer<Integer> getBufferInteger(String key) {
-		return (CLBuffer<Integer>) this.buffersRelease.get(key);
+		releaseAll();
 	}
 	
-	@SuppressWarnings("unchecked")
-	CLBuffer<Float> getBufferFloat(String key) {
-		return (CLBuffer<Float>) this.buffersRelease.get(key);
-	}
-	
-	@SuppressWarnings("unchecked")
-	CLBuffer<Byte> getBufferByte(String key) {
-		return (CLBuffer<Byte>) this.buffersRelease.get(key);
-	}	
-	
-	private CLBuffer<Integer> setupInputIntegerBuffer(Pointer<Integer> origin) {
-		return context.createBuffer(Usage.Input, origin, copyToDevice);
-	}
-	
-	private CLBuffer<Float> setupInputFloatBuffer(Pointer<Float> origin) {
-		return context.createBuffer(Usage.Input, origin, copyToDevice);
-	}
-	
-	private CLBuffer<Byte> setupInputByteBuffer(Pointer<Byte> origin) {
-		return context.createBuffer(Usage.Input, origin, copyToDevice);
-	}
-	
-	private CLBuffer<Integer> setupOutputIntegerBuffer(long length) {
-		return context.createIntBuffer(Usage.Output, length);
-	}
-	
-	private CLBuffer<Float> setupOutputFloatBuffer(long length) {
-		return context.createFloatBuffer(Usage.Output, length);
-	}
-	
-	private CLBuffer<Byte> setupOutputByteBuffer(long length) {
-		return context.createByteBuffer(Usage.Output, length);
+	void releaseAll() {
+		clearAllocatedObjects();
 	}	
 	
 	private void clearAllocatedObjects() {
@@ -434,73 +545,16 @@ public abstract class RunningKernel {
 	private void clearAllocatedCLObjects() {
 		System.err.println("Clearing CLMEM");
 		for(String buffObject: this.buffersRelease.keySet()) {
-			this.buffersRelease.get(buffObject).release();
+			this.buffersRelease.get(buffObject).getBuffer().release();
 		}
 		this.buffersRelease.clear();
 	}
 
 	private void clearAllocatedPTRObjects() {
 		System.err.println("Clearing POINTERS");
-		this.pointersRelease.clearAllocatedPTRObjects();
+		for(String buffObject: this.pointersRelease.keySet()) {
+			this.pointersRelease.get(buffObject).getBuffer().release();
+		}
+		this.pointersRelease.clear();
 	}		
-}
-
-class PointerMap {
-	private Map<String, Pointer<Integer>> integerMap;
-	private Map<String, Pointer<Float>> floatMap;
-	private Map<String, Pointer<Byte>> byteMap;
-	
-	
-	PointerMap() {
-		super();
-		integerMap = Maps.newHashMap();
-		floatMap = Maps.newHashMap();
-		byteMap = Maps.newHashMap();
-	}
-	
-	private boolean checkKeyUniqueness(String key) {
-		return !(this.integerMap.containsKey(key) || this.floatMap.containsKey(key) || this.byteMap.containsKey(key));
-	}
-	
-	Pointer<Integer> setPointerInteger(String key, Pointer<Integer> ptr) {
-		return checkKeyUniqueness(key) ? this.integerMap.put(key,ptr) : null;
-	}
-	
-	Pointer<Float> setPointerFloat(String key, Pointer<Float> ptr) {
-		return checkKeyUniqueness(key) ? this.floatMap.put(key,ptr) : null;
-	}
-	
-	Pointer<Byte> setPointerByte(String key, Pointer<Byte> ptr) {
-		return checkKeyUniqueness(key) ? this.byteMap.put(key,ptr) : null;
-	}	
-	
-	Pointer<Integer> getPointerInteger(String key) {
-		return this.integerMap.get(key);
-	}
-	
-	Pointer<Float> getPointerFloat(String key) {
-		return this.floatMap.get(key);
-	}
-	
-	Pointer<Byte> getPointerByte(String key) {
-		return this.byteMap.get(key);
-	}	
-	
-	void clearAllocatedPTRObjects() {
-		for(String buffObject: integerMap.keySet()) {
-			integerMap.get(buffObject).release();
-		}
-		
-		for(String buffObject: floatMap.keySet()) {
-			integerMap.get(buffObject).release();
-		}
-		
-		for(String buffObject: byteMap.keySet()) {
-			integerMap.get(buffObject).release();
-		}		
-		
-		integerMap.clear();
-		floatMap.clear();
-		byteMap.clear();
-	}
 }

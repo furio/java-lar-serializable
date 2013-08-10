@@ -52,6 +52,7 @@ __kernel void many_vec_mul_local_bitwise_binary(
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
 			currCol = column_indices[i];
+			// should be: currCol >> log2(INTEGER_BIT_SIZE)
 			bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/INTEGER_BIT_SIZE);
 			dot_prod += ((localVector[ currCol / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}
@@ -88,6 +89,7 @@ __kernel void many_vec_mul_bitwise_binary(
    
 		for (unsigned int i = row_indices[row]; i < row_end; ++i) {
 			currCol = column_indices[i];
+			// should be: currCol >> log2(INTEGER_BIT_SIZE)
 			bitToCheck = currCol - INTEGER_BIT_SIZE*(currCol/INTEGER_BIT_SIZE);
 			dot_prod += ((vector[ currCol / INTEGER_BIT_SIZE ] & (1 << bitToCheck)) >> bitToCheck);
 		}
