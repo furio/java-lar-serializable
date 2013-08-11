@@ -1,14 +1,19 @@
 package it.cvdlab.lar.model.serialize;
 
+import it.cvdlab.lar.model.InputVectorsContainer;
 import it.cvdlab.lar.model.OutputVectorsContainer;
+import it.cvdlab.lar.pipeline.helpers.ResultTuple;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.codehaus.jackson.map.ObjectMapper;
+
+import com.google.common.collect.Lists;
 
 public class OutputVectorsSerialize {
 	private OutputVectorsSerialize() {};
@@ -71,5 +76,33 @@ public class OutputVectorsSerialize {
 				e.printStackTrace();
 			}
 		}
-    }     
+    }
+    
+	public static OutputVectorsContainer fromResultTuple(List<ResultTuple> resultTuples, InputVectorsContainer ivc, int vectorLength) {
+		OutputVectorsContainer ov = new OutputVectorsContainer();
+		ov.setVectorOffset(ivc.getVectorOffset());
+		
+		List<List<Byte>> resultsAnnidated = Lists.newArrayList();
+		
+		// System.out.println("Conversione risultati di " + ivc.getVectorList().size() + " vettori");
+		List<Byte> result;
+		long totalElapsed = 0;
+		for(ResultTuple rtCurr: resultTuples) {
+			result = rtCurr.getDataOutput();
+			totalElapsed += rtCurr.getElapsedTime();
+			System.out.println("-- Converting " + rtCurr.getVectorsQty() + " vectors");
+			for(int i = 0; i < rtCurr.getVectorsQty(); i++) {
+				List<Byte> currList = Lists.newArrayListWithCapacity(vectorLength);
+				for(int j = 0; j < vectorLength; j++) {
+					currList.add( result.get(i*vectorLength + j) );
+				}
+				resultsAnnidated.add(currList);
+			}
+		}
+
+		ov.setVectorList(resultsAnnidated);
+		ov.setVectorStats( Lists.newArrayList(new Long(totalElapsed), new Long(0)) );
+		
+		return ov;
+    }
 }

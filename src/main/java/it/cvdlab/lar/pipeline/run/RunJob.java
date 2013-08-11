@@ -21,8 +21,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.google.common.collect.Lists;
-
 public class RunJob {
 	private static final String BORDO3_FILE = DefaultFileNames.BORDO3_FILE;
 	private static final String SELETTORI_FILE = DefaultFileNames.SELETTORI_FILE;
@@ -84,7 +82,6 @@ public class RunJob {
 	
 	private static void runJob(CsrMatrix b3, InputVectorsContainer ivc, String outFile) {
 		int vectorLength = ivc.getVectorList().get(0).size();
-		int vectorsCount = ivc.getVectorList().size();
 		
 		System.out.println("Conversione a binario delle q.c.");
 		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
@@ -94,28 +91,7 @@ public class RunJob {
 		System.out.println("Chiamata kernel");
 		List<ResultTuple> resultTuples = LARTestBinaryContinuos.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
-		OutputVectorsContainer ov = new OutputVectorsContainer();
-		ov.setVectorOffset(ivc.getVectorOffset());
-		List<List<Byte>> resultsAnnidated = Lists.newArrayList();
-		
-		System.out.println("Conversione risultati di " + vectorsCount + " vettori");
-		List<Byte> result;
-		long totalElapsed = 0;
-		for(ResultTuple rtCurr: resultTuples) {
-			result = rtCurr.getDataOutput();
-			totalElapsed += rtCurr.getElapsedTime();
-			System.out.println("-- Converting " + rtCurr.getVectorsQty() + " vectors");
-			for(int i = 0; i < rtCurr.getVectorsQty(); i++) {
-				List<Byte> currList = Lists.newArrayListWithCapacity(b3.getRowCount());
-				for(int j = 0; j < b3.getRowCount(); j++) {
-					currList.add( result.get(i*b3.getRowCount() + j) );
-				}
-				resultsAnnidated.add(currList);
-			}
-		}
-
-		ov.setVectorList(resultsAnnidated);
-		ov.setVectorStats( Lists.newArrayList(new Long(totalElapsed), new Long(0)) );
+		OutputVectorsContainer ov  = OutputVectorsSerialize.fromResultTuple(resultTuples, ivc, b3.getRowCount());
 		
 		System.out.println("Serializzazione risultati");
 		OutputVectorsSerialize.toFile(ov, outFile);

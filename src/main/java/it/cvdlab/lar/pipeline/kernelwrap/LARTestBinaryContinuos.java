@@ -9,6 +9,7 @@ import it.cvdlab.lar.pipeline.helpers.ResultTuple;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Map;
 
 import org.bridj.Pointer;
 
@@ -189,30 +190,50 @@ public class LARTestBinaryContinuos {
 			System.err.println("Create kernel " + "["+i+"]" + "["+howManyResultVectors+"]" + "["+vectorsToCompute+"]");
 			multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
 			
-			if (KERNEL_FUNCTION.indexOf("local") != -1) {
-				System.err.println("Adding local cache");
-				multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
-					cl_vector_data, cl_output_data, i,
-					new LocalSize(vectorSize*(Integer.SIZE/8)));
-			} else {
-				System.err.println("No local cache");
-				multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
-					cl_vector_data, cl_output_data, i);
-			}
-			
 			int[] wgSize;
 			int[] locSize;
 			int multipleGroupSize = Math.min(howManyResultVectors, vectorsToCompute);
 			
+			// WI consigliati per il kernel
+			long suggestedWorkItems = maxWorkGroupSize;
+			Map<CLDevice, Long> prefsLocal = multiplyMatrixKernel.getPreferredWorkGroupSizeMultiple();
+			for(CLDevice currDev : prefsLocal.keySet()) {
+				System.out.println("Dev: " + currDev.getName() + " -- Kernel Preferred: " + prefsLocal.get(currDev));
+				suggestedWorkItems = Math.min(prefsLocal.get(currDev), suggestedWorkItems);
+			}			
 			// Math.max(multipleWorkGroup, howManyVectors) ==> prendi il multiplo o i vettori
-			if (true && (runOn == DeviceFeature.CPU)) {
-				wgSize = new int[]{ multipleGroupSize };
-				locSize = null;
+			
+			
+			// TODO: Magic number GTX 670
+			if (runOn == DeviceFeature.GPU) {
+				suggestedWorkItems = 192;
+			}
+				
+			wgSize = new int[]{ (int) (multipleGroupSize * suggestedWorkItems) }; 
+			locSize = new int[]{ (int) suggestedWorkItems };			
+			
+			System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
+			
+			boolean isRowNotDivisible = (matrixA.getRowCount() > locSize[0]) && ((matrixA.getRowCount() % locSize[0]) != 0);
+			boolean isVectorNotDivisible = (vectorSize > locSize[0]) && ((vectorSize % locSize[0]) != 0);
+			
+			System.out.println("Row needs remainder: " + isRowNotDivisible);
+			System.out.println("Vectors needs remainder: " + isVectorNotDivisible);			
+			
+			if (KERNEL_FUNCTION.indexOf("local") != -1) {
+				System.err.println("Adding local cache");
+				multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+					cl_vector_data, cl_output_data, 
+					i,
+					isRowNotDivisible ? 1 : 0, 
+					isVectorNotDivisible ? 1 : 0,
+					new LocalSize(vectorSize*(Integer.SIZE/8)));
 			} else {
-				// TODO: Magic number GTX 670
-				maxWorkGroupSize = 192;
-				wgSize = new int[]{ (int) (multipleGroupSize * maxWorkGroupSize) }; 
-				locSize = new int[]{ (int) maxWorkGroupSize };			
+				System.err.println("No local cache");
+				multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+					cl_vector_data, cl_output_data, 
+					i,
+					isRowNotDivisible ? 1 : 0);
 			}
 			
 			if (i == 0) {
@@ -220,18 +241,11 @@ public class LARTestBinaryContinuos {
 				queue.finish();				
 			}
 			
-			System.err.println("WgSize: " + wgSize[0] + " ("+multipleGroupSize+") - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
-			
 			CLEvent addEvt = null;
 			long kernelTime = System.currentTimeMillis();
-			if (true && (runOn == DeviceFeature.CPU)) {
-				System.err.println("EnqueueND Range - wgSize");
-				addEvt = multiplyMatrixKernel.enqueueNDRange(queue, wgSize);
-			} else {
-				System.err.println("EnqueueND Range - wgSize+locSize");
-				addEvt = multiplyMatrixKernel
-						.enqueueNDRange(queue, wgSize, locSize);
-			}
+			System.err.println("EnqueueND Range - wgSize+locSize");
+			addEvt = multiplyMatrixKernel.enqueueNDRange(queue, wgSize, locSize);
+			
 			ResponseTime rtCount = new ResponseTime(kernelTime);
 			addEvt.setCompletionCallback(rtCount);
 

@@ -5,6 +5,8 @@
 // oldVectorSize => #define OLDVECTORSIZE
 // inputVectorSize => #define INPUTVECTORSIZE
 // totalVectors => #define TOTALVECTORSSIZE
+// (ROWSIZE % get_local_size(0)) == 0 ? (ROW_DIVISIBLE = 0) : (ROW_DIVISIBLE = 1)
+// (INPUTVECTORSIZE % get_local_size(0)) == 0 ? (VECTOR_DIVISIBLE = 0) : (VECTOR_DIVISIBLE = 1)
 
 #define INTEGER_BIT_SIZE 32
 
@@ -13,11 +15,11 @@ __kernel void many_vec_mul_local_bitwise_binary(
           __global const unsigned int * column_indices,
           __global const unsigned int * vectorBig,
           __global unsigned char * resultBig,
-		  const int startVectorOffset,
+		  const uint startVectorOffset, const uint rowDivisible, const uint vectorDivisible,
           __local int * localVector)
 {
 	// Offset di moltiplicazione per riga
-	unsigned int work_per_item = max((uint) (ROWSIZE / get_local_size(0)), (uint) 1);
+	unsigned int work_per_item = max((uint) (ROWSIZE / get_local_size(0)) + rowDivisible , (uint) 1);
 	unsigned int row_start = get_local_id(0) * work_per_item;
 	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
   
@@ -34,7 +36,7 @@ __kernel void many_vec_mul_local_bitwise_binary(
 	unsigned int bitToCheck;
   
 	// ==== Local copy ====
-	unsigned int copy_per_item = max((uint) (INPUTVECTORSIZE / get_local_size(0)), (uint) 1);
+	unsigned int copy_per_item = max((uint) (INPUTVECTORSIZE / get_local_size(0)) + vectorDivisible, (uint) 1);
 	unsigned int el_start = get_local_id(0) * copy_per_item;
 	unsigned int el_stop  = min( (uint) ((get_local_id(0) + 1) * copy_per_item), (uint) INPUTVECTORSIZE);
 	
@@ -66,10 +68,10 @@ __kernel void many_vec_mul_bitwise_binary(
           __global const unsigned int * column_indices,
           __global const unsigned int * vectorBig,
           __global unsigned char * resultBig,
-		  const int startVectorOffset)
+		  const uint startVectorOffset,const uint rowDivisible)
 {
 	// Offset di moltiplicazione per riga
-	unsigned int work_per_item = max((uint) (ROWSIZE / get_local_size(0)), (uint) 1);
+	unsigned int work_per_item = max((uint) (ROWSIZE / get_local_size(0)) + rowDivisible, (uint) 1);
 	unsigned int row_start = get_local_id(0) * work_per_item;
 	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
   

@@ -41,6 +41,7 @@ public class LARTestBinary {
 	private static String D_OLDVECTORSIZE = "OLDVECTORSIZE";
 	private static String D_INPUTVECTORSIZE = "INPUTVECTORSIZE";
 	private static String D_TOTALVECTORSSIZE = "TOTALVECTORSSIZE";
+	//
 	
 	private static long TOTAL_MEMORY = 0;
 	private static long RESULT_VECTOR_SIZE = 0;
@@ -188,60 +189,58 @@ public class LARTestBinary {
 		multiplyMatrixKernel = program.createKernel(KERNEL_FUNCTION);
 		
 		
-		if (KERNEL_FUNCTION.indexOf("local") != -1) {
-			System.err.println("Adding local cache");
-			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
-				cl_vector_data, cl_output_data,
-				new LocalSize(vectorSize*(Integer.SIZE/8)));
-		} else {
-			System.err.println("No local cache");
-			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
-				cl_vector_data, cl_output_data);
-		}
-
-
-		// Multipli del work group consigliati
-		@SuppressWarnings("unused")
-		long multipleWorkGroup = howManyVectors;
+		// WI consigliati per il kernel
+		long suggestedWorkItems = maxWorkGroupSize;
 		Map<CLDevice, Long> prefsLocal = multiplyMatrixKernel.getPreferredWorkGroupSizeMultiple();
 		for(CLDevice currDev : prefsLocal.keySet()) {
-			System.out.println("Dev: " + currDev.getName() + " -- Multiple: " + prefsLocal.get(currDev));
-			multipleWorkGroup = prefsLocal.get(currDev);
+			System.out.println("Dev: " + currDev.getName() + " -- Kernel Preferred: " + prefsLocal.get(currDev));
+			suggestedWorkItems = Math.min(prefsLocal.get(currDev), suggestedWorkItems);
 		}
-		
-		// Size of a work group
-		prefsLocal = multiplyMatrixKernel.getWorkGroupSize();
-		for(CLDevice currDev : prefsLocal.keySet()) {
-			System.out.println("Dev: " + currDev.getName() + " -- WGSize: " + prefsLocal.get(currDev));
-			maxWorkGroupSize = Math.min(maxWorkGroupSize, prefsLocal.get(currDev));
-		}		
 		
 		int[] wgSize;
 		int[] locSize;
 		
 		
 		// Math.max(multipleWorkGroup, howManyVectors) ==> prendi il multiplo o i vettori
-		if (true && (runOn == DeviceFeature.CPU)) {
-			wgSize = new int[]{ howManyVectors };
-			locSize = null;
-		} else {
-			wgSize = new int[]{ (int) (howManyVectors * maxWorkGroupSize) }; 
-			locSize = new int[]{ (int) maxWorkGroupSize };			
-		}
+		wgSize = new int[]{ (int) (howManyVectors * suggestedWorkItems) }; 
+		locSize = new int[]{ (int) suggestedWorkItems };			
 
 		System.err.println("WgSize: " + wgSize[0] + " - LocalSize: " + ((locSize == null) ? 0 : locSize[0]));
+		
+		boolean isRowNotDivisible = (matrixA.getRowCount() > locSize[0]) && ((matrixA.getRowCount() % locSize[0]) != 0);
+		boolean isVectorNotDivisible = (vectorSize > locSize[0]) && ((vectorSize % locSize[0]) != 0);
+		
+		System.out.println("Row needs remainder: " + isRowNotDivisible);
+		System.out.println("Vectors needs remainder: " + isVectorNotDivisible);
+		
+		if (KERNEL_FUNCTION.indexOf("local") != -1) {
+			System.err.println("Adding local cache");
+			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+				cl_vector_data, cl_output_data, 
+				isRowNotDivisible ? 1 : 0, 
+				isVectorNotDivisible ? 1 : 0,
+				new LocalSize(vectorSize*(Integer.SIZE/8)));
+		} else {
+			System.err.println("No local cache");
+			multiplyMatrixKernel.setArgs(cl_matA_rowptr, cl_matA_colindices,
+				cl_vector_data, cl_output_data,
+				isRowNotDivisible ? 1 : 0);
+		}
+
+
+
 		
 		// queue.finish();
 		CLEvent addEvt = null;
 		long kernelTime = System.currentTimeMillis();
-		if (true && (runOn == DeviceFeature.CPU)) {
+		/*
+		if (false && (runOn == DeviceFeature.CPU)) {
 			System.err.println("EnqueueND Range - wgSize");
 			addEvt = multiplyMatrixKernel.enqueueNDRange(queue, wgSize);
-		} else {
+		} else { */
 			System.err.println("EnqueueND Range - wgSize+locSize");
-			addEvt = multiplyMatrixKernel
-					.enqueueNDRange(queue, wgSize, locSize);
-		}
+			addEvt = multiplyMatrixKernel.enqueueNDRange(queue, wgSize, locSize);
+		// }
 		ResponseTime rtCount = new ResponseTime(kernelTime);
 		addEvt.setCompletionCallback(rtCount);
 
