@@ -43,6 +43,7 @@ A simple Java CLI module that performs sparse matrix many vectors (SpMMV) multip
 ## JVM Options
 
 You might want to give more/less RAM to the JVM. You can do so by fiddling with:
+
 1. `-Xmx14G`
 2. `-XX:MaxPermSize=4G`
 3. `-XX:PermSize=512M`
