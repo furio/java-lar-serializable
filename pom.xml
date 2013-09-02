@@ -38,6 +38,55 @@
         </pluginRepository>	
 	</pluginRepositories>
 	
+	<build>
+	  <resources>
+	    <resource>
+	      <filtering>false</filtering>
+	      <directory>${basedir}/native-lib</directory>
+	      <includes>
+	        <include>*.dll</include>
+	        <include>*.so</include>
+	      </includes>
+	    </resource>
+	  </resources>
+	   
+	  <plugins>
+		  	<!-- With shade -->
+		  	<!-- clean package shade:shade -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-jar-plugin</artifactId>
+	            <version>2.3.2</version>
+	            <configuration>
+	                <archive>
+	                    <manifest>
+	                        <addClasspath>false</addClasspath>
+	                        <classpathPrefix>lib/</classpathPrefix>
+	                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
+	                    </manifest>
+	                </archive>
+	            </configuration>
+	        </plugin>
+		 	<!-- with assembly -->
+		  	<!-- clean compile assembly:single -->
+		  	<!--
+		    <plugin>
+		      <artifactId>maven-assembly-plugin</artifactId>
+		      <configuration>
+		        <archive>
+		          <manifest>
+		            <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
+		          </manifest>
+		        </archive>
+		        <descriptorRefs>
+		          <descriptorRef>jar-with-dependencies</descriptorRef>
+		        </descriptorRefs>
+		      </configuration>
+		    </plugin>
+		    -->
+		</plugins>
+	</build>
+		
 	<dependencies>
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
@@ -102,54 +151,5 @@
 			<scope>test</scope>
 	   </dependency>
 	</dependencies>
-	
-	<build>
-	  <resources>
-	    <resource>
-	      <filtering>false</filtering>
-	      <directory>${basedir}/native-lib</directory>
-	      <includes>
-	        <include>*.dll</include>
-	        <include>*.so</include>
-	      </includes>
-	    </resource>
-	  </resources>
-	   
-	  <plugins>
-		  	<!-- With shade -->
-		  	<!-- clean package shade:shade -->
-	        <plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-jar-plugin</artifactId>
-	            <version>2.3.2</version>
-	            <configuration>
-	                <archive>
-	                    <manifest>
-	                        <addClasspath>false</addClasspath>
-	                        <classpathPrefix>lib/</classpathPrefix>
-	                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
-	                    </manifest>
-	                </archive>
-	            </configuration>
-	        </plugin>
-		 	<!-- with assembly -->
-		  	<!-- clean compile assembly:single -->
-		  	<!--
-		    <plugin>
-		      <artifactId>maven-assembly-plugin</artifactId>
-		      <configuration>
-		        <archive>
-		          <manifest>
-		            <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
-		          </manifest>
-		        </archive>
-		        <descriptorRefs>
-		          <descriptorRef>jar-with-dependencies</descriptorRef>
-		        </descriptorRefs>
-		      </configuration>
-		    </plugin>
-		    -->
-		</plugins>
-	</build>
-	
+
 </project>
