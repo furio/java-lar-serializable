@@ -118,7 +118,6 @@
 	  <plugins>
 		  	<!-- With shade -->
 		  	<!-- clean package shade:shade -->
-		  	<!--
 	        <plugin>
 	            <groupId>org.apache.maven.plugins</groupId>
 	            <artifactId>maven-jar-plugin</artifactId>
@@ -126,16 +125,16 @@
 	            <configuration>
 	                <archive>
 	                    <manifest>
-	                        <addClasspath>true</addClasspath>
+	                        <addClasspath>false</addClasspath>
 	                        <classpathPrefix>lib/</classpathPrefix>
 	                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
 	                    </manifest>
 	                </archive>
 	            </configuration>
 	        </plugin>
-	        -->
 		 	<!-- with assembly -->
 		  	<!-- clean compile assembly:single -->
+		  	<!--
 		    <plugin>
 		      <artifactId>maven-assembly-plugin</artifactId>
 		      <configuration>
@@ -149,6 +148,7 @@
 		        </descriptorRefs>
 		      </configuration>
 		    </plugin>
+		    -->
 		</plugins>
 	</build>
 	
