@@ -20,7 +20,10 @@
 			<name>java.net stable repo</name>
 			<url>https://maven.java.net/content/groups/public</url>
 		</repository>		
-		
+		<repository>
+		    <id>jcuda local repo</id>
+		    <url>file://${project.basedir}/repo</url>
+		</repository>		
 	</repositories>
 	
 	<pluginRepositories>
@@ -29,16 +32,13 @@
 			<name>Sonatype OSS Snapshots Repository</name>
 			<url>http://oss.sonatype.org/content/groups/public</url>
 		</pluginRepository>
-	</pluginRepositories>	
-
+        <pluginRepository>
+            <id>onejar-maven-plugin.googlecode.com</id>
+            <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+        </pluginRepository>	
+	</pluginRepositories>
+	
 	<dependencies>
-		<!--
-		<dependency>
-			<groupId>org.apache.wink</groupId>
-			<artifactId>wink-jackson-provider</artifactId>
-			<version>1.2.1-incubating</version>
-		</dependency>
-		-->
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-core-asl</artifactId>
@@ -60,13 +60,6 @@
 			<version>1.0.0-RC3</version>
 			<!--   <version>1.0-SNAPSHOT</version> -->
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>com.nativelibs4java</groupId>
-			<artifactId>javacl-blas</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		-->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -96,12 +89,48 @@
 			<groupId>org.javolution</groupId>
 			<artifactId>javolution-core-java</artifactId>
 			<version>6.0.0-SNAPSHOT</version>
-	   </dependency>		
+	   </dependency>
+		<dependency>
+		  <groupId>jcuda</groupId>
+		  <artifactId>jcuda</artifactId>
+		  <version>0.5.0b</version>
+		</dependency>   
 	   <dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.0</version>
 			<scope>test</scope>
 	   </dependency>
-	</dependencies>  
+	</dependencies>
+	
+	<build>
+	  <resources>
+	    <resource>
+	      <filtering>false</filtering>
+	      <directory>${basedir}/native-lib</directory>
+	      <includes>
+	        <include>*.dll</include>
+	        <include>*.so</include>
+	      </includes>
+	    </resource>
+	  </resources>
+    	
+	  <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.3.2</version>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <addClasspath>false</addClasspath>
+                        <classpathPrefix>lib/</classpathPrefix>
+                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
+                    </manifest>
+                </archive>
+            </configuration>
+        </plugin>
+	  </plugins>
+	</build>
+	
 </project>

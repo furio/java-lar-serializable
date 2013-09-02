@@ -25,6 +25,7 @@ public class RunJob {
 	private static final String BORDO3_FILE = DefaultFileNames.BORDO3_FILE;
 	private static final String SELETTORI_FILE = DefaultFileNames.SELETTORI_FILE;
 	private static final String OUTPUT_FILE = DefaultFileNames.OUTPUT_FILE;
+	private static final boolean USE_BINARY = false;
 	
 	@SuppressWarnings("unused")
 	private static final Integer[] CRAP_INT_VECTOR = {};
@@ -34,6 +35,7 @@ public class RunJob {
 		cmdLineOptions.addOption("b", "bordo", true, "input file containing the bordo matrix. Default: " + BORDO3_FILE);
 		cmdLineOptions.addOption("s", "selettori", true, "input file containing the chains. Default: " + SELETTORI_FILE);
 		cmdLineOptions.addOption("o", "output", true, "output file. Default: " + OUTPUT_FILE);
+		cmdLineOptions.addOption("y", "binaryoutput", false, "output file in binary. Default: " + USE_BINARY);
 		cmdLineOptions.addOption("h", "help", false, "print help");
 		
 		CommandLineParser parser = new GnuParser();
@@ -55,6 +57,7 @@ public class RunJob {
 		String input_bordo = BORDO3_FILE;
 		String input_selettori = SELETTORI_FILE;
 		String output_vettori = OUTPUT_FILE;
+		boolean use_binary = USE_BINARY;
 		
 		if (cmd.hasOption("b")) {
 			input_bordo = cmd.getOptionValue("b");
@@ -68,19 +71,25 @@ public class RunJob {
 			output_vettori = cmd.getOptionValue("o");
 		}
 		
+		if (cmd.hasOption("y")) {
+			use_binary = true;
+			output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
+		}
+		
 		System.out.println("Bordo3: " + input_bordo);
 		System.out.println("Selettori: " + input_selettori);
 		System.out.println("Output: " + output_vettori);
+		System.out.println("Binary output: " + use_binary);
 		
 		System.out.println("Lettura bordo3");
 		CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
 		System.out.println("Lettura q.c.");
 		InputVectorsContainer ivc = InputVectorsSerialize.fromFile(input_selettori);
 		
-		runJob(bordo3, ivc, output_vettori);
+		runJob(bordo3, ivc, output_vettori, use_binary);
 	}
 	
-	private static void runJob(CsrMatrix b3, InputVectorsContainer ivc, String outFile) {
+	private static void runJob(CsrMatrix b3, InputVectorsContainer ivc, String outFile, boolean binaryOutput) {
 		int vectorLength = ivc.getVectorList().get(0).size();
 		
 		System.out.println("Conversione a binario delle q.c.");
@@ -91,10 +100,14 @@ public class RunJob {
 		System.out.println("Chiamata kernel");
 		List<ResultTuple> resultTuples = LARTestBinaryContinuos.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
-		OutputVectorsContainer ov  = OutputVectorsSerialize.fromResultTuple(resultTuples, ivc, b3.getRowCount());
+		OutputVectorsContainer ov = OutputVectorsSerialize.fromResultTuple(resultTuples, ivc, b3.getRowCount());
 		
 		System.out.println("Serializzazione risultati");
-		OutputVectorsSerialize.toFile(ov, outFile);
+		if (binaryOutput) {
+			OutputVectorsSerialize.toBinaryFile(ov, outFile, true);
+		} else {
+			OutputVectorsSerialize.toFile(ov, outFile);
+		}
 	}
 	
 	private RunJob() {}

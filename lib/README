@@ -1,0 +1,7 @@
+Add jars that doesn't have a maven repo here with
+
+groupId.artifactId[.source]_version[.SNAPSHOT].jar
+
+and then run py script in root project directory
+
+(Reference: https://github.com/nikita-volkov/install-to-project-repo)
