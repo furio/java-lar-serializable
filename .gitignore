@@ -9,3 +9,6 @@
 # Generic
 *.log
 *.json
+
+# Maven
+dependency-reduced-pom.xml

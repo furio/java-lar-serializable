@@ -114,23 +114,42 @@
 	      </includes>
 	    </resource>
 	  </resources>
-    	
+	   
 	  <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <version>2.3.2</version>
-            <configuration>
-                <archive>
-                    <manifest>
-                        <addClasspath>false</addClasspath>
-                        <classpathPrefix>lib/</classpathPrefix>
-                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
-                    </manifest>
-                </archive>
-            </configuration>
-        </plugin>
-	  </plugins>
+		  	<!-- With shade -->
+		  	<!-- clean package shade:shade -->
+		  	<!--
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-jar-plugin</artifactId>
+	            <version>2.3.2</version>
+	            <configuration>
+	                <archive>
+	                    <manifest>
+	                        <addClasspath>true</addClasspath>
+	                        <classpathPrefix>lib/</classpathPrefix>
+	                        <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
+	                    </manifest>
+	                </archive>
+	            </configuration>
+	        </plugin>
+	        -->
+		 	<!-- with assembly -->
+		  	<!-- clean compile assembly:single -->
+		    <plugin>
+		      <artifactId>maven-assembly-plugin</artifactId>
+		      <configuration>
+		        <archive>
+		          <manifest>
+		            <mainClass>it.cvdlab.lar.pipeline.run.RunJob</mainClass>
+		          </manifest>
+		        </archive>
+		        <descriptorRefs>
+		          <descriptorRef>jar-with-dependencies</descriptorRef>
+		        </descriptorRefs>
+		      </configuration>
+		    </plugin>
+		</plugins>
 	</build>
 	
 </project>
