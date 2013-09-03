@@ -37,7 +37,7 @@ public class PrefixSumKernelOld {
 	
 	private static String D_TYPE = "T";
 	
-	private static int ELEMENTS_NUMBER = 127;
+	private static int ELEMENTS_NUMBER = 1024;
 	private static long TOTAL_MEMORY = 0;
 	private static long MAX_ALLOCATION = 0;
 
@@ -103,6 +103,7 @@ public class PrefixSumKernelOld {
 			System.err.println(e.toString());
 			return null;
 		}
+		System.err.println("Buffer element size (byte): " + cl_vector_data.getElementSize());
 
 		System.err.println("Kernel source");
 		// Read the program sources and compile them :
@@ -126,7 +127,7 @@ public class PrefixSumKernelOld {
 		// System.err.println("\t options: " + "-D " + KERNEL_DEFINE_VSIZE + "=" + vectorSize);
 		
 		// Static input parameters
-		program.addBuildOption("-D" + D_TYPE + "=int");
+		program.defineMacro(D_TYPE, "int");
 		
 		if (runOn != DeviceFeature.CPU) {
 			// Remove unused stuff for this kernel
@@ -152,6 +153,8 @@ public class PrefixSumKernelOld {
 		if ((elements.size() % (int)multipleWorkGroup) > 0) { blockSize++; };
 		int[] localWorkSize = {(int)multipleWorkGroup };
 		int[] globalWorkSize = { MultipleFind.toMultipleOf(elements.size() / (int)multipleWorkGroup, (int)multipleWorkGroup)};		
+		
+		System.err.println("WgSize: " + globalWorkSize[0] + " - LocalSize: " + ((localWorkSize == null) ? 0 : localWorkSize[0]));
 		
 		System.err.println("Adding local cache");
 		multiplyMatrixKernel.setArgs(

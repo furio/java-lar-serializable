@@ -266,7 +266,7 @@ public abstract class RunningKernel {
 	
 	private void addDefine(String name, String value) {
 		if (this.program != null) {
-			this.program.addBuildOption("-D" + name + "=" + value);
+			this.program.defineMacro(name, value);
 		}
 	}
 	
@@ -334,7 +334,7 @@ public abstract class RunningKernel {
 	
 	private void getkernelStats() {
 		this.maxKernelWorkgroupSize = this.maxWorkGroupSize;
-		Map<CLDevice, Long> prefsLocal = this.kernel.getWorkGroupSize();
+		Map<CLDevice, Long> prefsLocal = this.kernel.getPreferredWorkGroupSizeMultiple();
 		
 		for(CLDevice currDev : prefsLocal.keySet()) {
 			this.maxKernelWorkgroupSize = Math.min(this.maxKernelWorkgroupSize, prefsLocal.get(currDev));
@@ -365,14 +365,13 @@ public abstract class RunningKernel {
 		}
 		
 		this.pointersRelease.put(key, new TupleBuffer<Pointer>(btType, pointerData));
-		
 		return pointerData; 
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Pointer createNewPointer(String key, long length, BufferType bType) {
 		Pointer currPtr = createNewPointer(length, bType.value() );
-		if (setPointer(key, currPtr, bType) != null) {
+		if (setPointer(key, currPtr, bType) == null) {
 			currPtr.release();
 			return null;
 		}

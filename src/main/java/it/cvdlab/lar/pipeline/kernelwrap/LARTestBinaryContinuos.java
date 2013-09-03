@@ -170,10 +170,10 @@ public class LARTestBinaryContinuos {
 		// System.err.println("\t options: " + "-D " + KERNEL_DEFINE_VSIZE + "=" + vectorSize);
 		
 		// Static input parameters
-		program.addBuildOption("-D" + D_ROWSIZE + "=" + matrixA.getRowCount());
-		program.addBuildOption("-D" + D_OLDVECTORSIZE + "=" + oldVectorSize);
-		program.addBuildOption("-D" + D_INPUTVECTORSIZE + "=" + vectorSize);
-		program.addBuildOption("-D" + D_TOTALVECTORSSIZE + "=" + howManyVectors);
+		program.defineMacro(D_ROWSIZE, matrixA.getRowCount());
+		program.defineMacro(D_OLDVECTORSIZE, oldVectorSize);
+		program.defineMacro(D_INPUTVECTORSIZE, vectorSize);
+		program.defineMacro(D_TOTALVECTORSSIZE, howManyVectors);
 		
 		if (runOn != DeviceFeature.CPU) {
 			// Remove unused stuff for this kernel

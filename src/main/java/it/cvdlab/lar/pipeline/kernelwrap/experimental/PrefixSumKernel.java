@@ -13,7 +13,6 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import com.nativelibs4java.opencl.CLEvent;
 import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
-import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.LocalSize;
 
 public class PrefixSumKernel extends RunningKernel {
@@ -36,7 +35,7 @@ public class PrefixSumKernel extends RunningKernel {
 		System.out.println("Context: " + psk.initContext());
 		System.out.println("Queue: " + psk.initQueue());
 		
-		psk.createNewPointerInteger(PTR_INPUT_KEY, elements);
+		System.out.println("Ptr: " + psk.createNewPointerInteger(PTR_INPUT_KEY, elements));
 		psk.createInputMemoryBuffer(PTR_INPUT_KEY);
 		
 		Map<String,String> defineMap = Maps.newHashMap();
@@ -53,10 +52,11 @@ public class PrefixSumKernel extends RunningKernel {
 		int[] localWorkSize = {(int)psk.getMaxKernelWorkgroupSize()};
 		int[] globalWorkSize = { MultipleFind.toMultipleOf(elements.size() / (int)psk.getMaxKernelWorkgroupSize(), (int)psk.getMaxKernelWorkgroupSize())};
 		
-		System.out.println(blockSize);
-		System.out.println(B);
-		System.out.println(localWorkSize[0]);
-		System.out.println(globalWorkSize[0]);
+		System.out.println("getMaxKernelWorkgroupSize " + psk.getMaxKernelWorkgroupSize());
+		System.out.println("blockSize " + blockSize);
+		System.out.println("B " + B);
+		System.out.println("localWorkSize[0] " + localWorkSize[0]);
+		System.out.println("globalWorkSize[0] " + globalWorkSize[0]);
 		
 		psk.setKernelArgs( new LocalSize(psk.getMaxKernelWorkgroupSize()*(Integer.SIZE/8)),
 							psk.getBufferInteger(PTR_INPUT_KEY),
@@ -85,7 +85,9 @@ public class PrefixSumKernel extends RunningKernel {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(runPrefixScan(Ints.asList(binarydataInit(1024,1))));
+		List<Integer> testInput = Ints.asList(binarydataInit(1024,1));
+		System.out.println(testInput);
+		System.out.println(runPrefixScan(testInput));
 	}
 	
 	private static int[] binarydataInit(int length, int initValue) {
