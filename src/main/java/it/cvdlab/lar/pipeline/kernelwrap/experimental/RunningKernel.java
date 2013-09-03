@@ -24,6 +24,8 @@ import com.nativelibs4java.opencl.CLQueue;
 import com.nativelibs4java.opencl.JavaCL;
 import com.nativelibs4java.util.IOUtils;
 
+// LD_PRELOAD = /usr/lib/jvm/java-7-oracle/jre/lib/amd64/libjsig.so
+
 public abstract class RunningKernel {
 	private static int KERNEL_MIN_LENGTH = 100;
 	private static String KERNEL_KEYWORD = "__kernel";
@@ -139,7 +141,12 @@ public abstract class RunningKernel {
 	}
 	
 	boolean initContext() {
-		this.context = JavaCL.createBestContext(runOn);
+		try {
+			this.context = JavaCL.createBestContext(runOn);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
 
 		if (this.context == null) {
 			clearAllocatedObjects();
@@ -189,7 +196,9 @@ public abstract class RunningKernel {
 			this.kernelSource = IOUtils.readText(path);
 			bReturn = true;
 		} catch (IOException e) {
-
+			e.printStackTrace();
+			bReturn = false;
+			this.kernelSource = null;
 		}
 		
 		if (bReturn) {

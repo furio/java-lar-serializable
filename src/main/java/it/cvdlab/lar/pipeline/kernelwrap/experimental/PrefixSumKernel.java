@@ -33,8 +33,8 @@ public class PrefixSumKernel extends RunningKernel {
 		
 		
 		PrefixSumKernel psk = new PrefixSumKernel(runOn);
-		psk.initContext();
-		psk.initQueue();
+		System.out.println("Context: " + psk.initContext());
+		System.out.println("Queue: " + psk.initQueue());
 		
 		psk.createNewPointerInteger(PTR_INPUT_KEY, elements);
 		psk.createInputMemoryBuffer(PTR_INPUT_KEY);
