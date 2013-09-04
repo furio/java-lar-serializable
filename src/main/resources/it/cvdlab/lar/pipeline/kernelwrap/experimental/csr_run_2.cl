@@ -2,7 +2,7 @@
 // spezzo la matrice A in x gruppi di y righe
 // ogni core si fa N righe nel gruppo
 
-__kernel void m_mul_m_count(
+__kernel void m_mul_m(
           __global const unsigned int * row_indices_a,
           __global const unsigned int * column_indices_a,
 		  __global const unsigned int * data_a,
@@ -17,8 +17,8 @@ __kernel void m_mul_m_count(
           const uint work_per_item)
 {
 	// Offset di moltiplicazione per riga ( tutta la computazione dei moduli sull'host)
-	unsigned int row_start = get_local_id(0) * work_per_item;
-	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
+	unsigned int row_start = get_local_id(0) * get_group_id(0) * work_per_item;
+	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * get_group_id(0) * work_per_item), (uint) ROWS_A);
   
 	// Variabili riutilizzabili
 	unsigned int row_a;
@@ -37,7 +37,7 @@ __kernel void m_mul_m_count(
 	unsigned int curr_res = 0;
 	
 	// Inizia computazione
-	for (row_a = (row_start * get_group_id(0)); row_a < (row_stop * get_group_id(0)); ++row_a) {
+	for (row_a = row_start; row_a < row_stop; ++row_a) {
   		nnz_row = 0;
 		col_ptr_end_a = row_indices_a[row_a + 1];
 		// Result

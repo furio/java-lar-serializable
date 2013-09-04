@@ -316,6 +316,11 @@ public abstract class RunningKernel {
 		return true;
 	}
 	
+	void resetKernelAndProgram(CLEvent evt) {
+		this.waitFor(evt);
+		this.resetKernelAndProgram();
+	}
+	
 	void resetKernelAndProgram() {
 		if ( kernel != null ) {
 			kernel.release();
@@ -442,6 +447,10 @@ public abstract class RunningKernel {
 	}		
 	
 	private <T extends Number> CLBuffer<T> setupInputBuffer(Pointer<T> origin) {
+		return context.createBuffer(Usage.Input, origin, copyToDevice);
+	}
+	
+	private <T extends Number> CLBuffer<T> setupInputOutputBuffer(Pointer<T> origin) {
 		return context.createBuffer(Usage.InputOutput, origin, copyToDevice);
 	}
 	
@@ -449,23 +458,46 @@ public abstract class RunningKernel {
 		return context.createBuffer(Usage.Output, inputType, length);
 	}
 	
-	@SuppressWarnings("rawtypes")
 	CLMem createInputMemoryBuffer(String pointerKey) {
+		return createIOMemoryBuffer(pointerKey, false);
+	}
+
+	CLMem createInputOutputMemoryBuffer(String pointerKey) {
+		return createIOMemoryBuffer(pointerKey, true);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private CLMem createIOMemoryBuffer(String pointerKey, boolean outputToo) {
 		TupleBuffer<Pointer> ptrCurr = this.pointersRelease.get(pointerKey);
 		if (ptrCurr == null) {
 			return null;
 		}
 		
-		switch(ptrCurr.getType()) {
-			case Integer:
-				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerInteger(pointerKey))));
-				
-			case Float:
-				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerFloat(pointerKey)))).getBuffer();
-				
-			case Byte:
-				this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerByte(pointerKey)))).getBuffer();				
+		if (outputToo) {
+			switch(ptrCurr.getType()) {
+				case Integer:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputOutputBuffer(getPointerInteger(pointerKey))));
+					
+				case Float:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputOutputBuffer(getPointerFloat(pointerKey)))).getBuffer();
+					
+				case Byte:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputOutputBuffer(getPointerByte(pointerKey)))).getBuffer();				
+			}			
+		} else {
+			switch(ptrCurr.getType()) {
+				case Integer:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerInteger(pointerKey))));
+					
+				case Float:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerFloat(pointerKey)))).getBuffer();
+					
+				case Byte:
+					this.buffersRelease.put(pointerKey, new TupleBuffer<CLMem>(ptrCurr.getType(), setupInputBuffer(getPointerByte(pointerKey)))).getBuffer();				
+			}
 		}
+		
+
 
 		return this.buffersRelease.get(pointerKey).getBuffer();
 	}
@@ -524,7 +556,11 @@ public abstract class RunningKernel {
 	
 	void releaseAll() {
 		clearAllocatedObjects();
-	}	
+	}
+	
+	void waitFor(CLEvent event) {
+		event.waitFor();
+	}
 	
 	private void clearAllocatedObjects() {
 		if (queue != null) {

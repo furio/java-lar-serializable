@@ -12,8 +12,8 @@ __kernel void m_mul_m_count(
           const uint work_per_item)
 {
 	// Offset di moltiplicazione per riga ( tutta la computazione dei moduli sull'host)
-	unsigned int row_start = get_local_id(0) * work_per_item;
-	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * work_per_item), (uint) ROWSIZE);
+	unsigned int row_start = get_local_id(0) * get_group_id(0) * work_per_item;
+	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * get_group_id(0) * work_per_item), (uint) ROWS_A);
   
   	// Shortcut al risultato
 	__global unsigned char * result = resultBig + get_group_id(0) * row_start;
@@ -33,7 +33,7 @@ __kernel void m_mul_m_count(
 	unsigned char foundNNZ;
   	
 	// Inizia computazione
-	for (row_a = (row_start * get_group_id(0)); row_a < (row_stop * get_group_id(0)); ++row_a) {
+	for (row_a = row_start; row_a < row_stop; ++row_a) {
   		nnz_row = 0;
 		col_ptr_end_a = row_indices_a[row_a + 1];
 		
@@ -69,6 +69,4 @@ __kernel void m_mul_m_count(
 		
 		result[ row ] = nnz_row;
 	}
-	
-	// Alla fine mi ritrovo l'array da dare in pasto alla prefix sum
 }

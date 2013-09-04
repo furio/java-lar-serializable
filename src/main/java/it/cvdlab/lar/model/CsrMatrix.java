@@ -160,11 +160,9 @@ public class CsrMatrix {
 			throw new Exception("Current matrix columns are different from argument matrix rows");
 		}
 		
-
-		
 		int[] tmp_rowptr;
 		int tmp_rowcount = this.getRowCount(),
-				tmp_colcount = matrix.getColCount();
+			tmp_colcount = matrix.getColCount();
 		
 		int i,j,k,l,count;
 		int[] JD = new int[tmp_colcount];
@@ -544,7 +542,7 @@ public class CsrMatrix {
 	
 	@JsonIgnore
 	public static CsrMatrix fromCOOArray(List<Integer> xVal, List<Integer> yVal, List<Float> dVal, int rowshape, int colshape) {
-		// System.err.println("Converting COO to CSR...");
+		// Converting COO to CSR...
 		int nnz = xVal.size();
 		
 		List<CooTriplet> unsorted = Lists.newArrayListWithExpectedSize(nnz);
@@ -552,7 +550,7 @@ public class CsrMatrix {
 			unsorted.add(new CooTriplet(xVal.get(i), yVal.get(i), dVal.get(i)));
 		}
 		
-		// System.err.println("Converting COO to CSR... Java MergeSort");
+		// Converting COO to CSR... Java MergeSort
 		Collections.sort(unsorted);
 		
 		List<Integer> rowptr = Lists.newArrayListWithExpectedSize(rowshape+1);
@@ -565,7 +563,7 @@ public class CsrMatrix {
 		prevRow = 0;
 		rowptr.add(prevRow);
 		
-		// System.err.println("Converting COO to CSR... Step 1");
+		// Converting COO to CSR... Step 1
 		for(int i = 0; i < nnz; i++) {
 			currTriplet = unsorted.get(i);
 			currRow = currTriplet.getX();
@@ -591,8 +589,7 @@ public class CsrMatrix {
 		// Rowshape + 1
 		rowptr.add(nnz);
 		
-		// System.err.println("Converting COO to CSR... Done");
-		
+		// Converting COO to CSR... Done
 		return new CsrMatrix(rowptr,colIndex,data,rowshape,colshape);
 	}	
 	

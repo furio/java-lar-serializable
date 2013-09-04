@@ -36,7 +36,7 @@ public class PrefixSumKernel extends RunningKernel {
 		System.out.println("Queue: " + psk.initQueue());
 		
 		System.out.println("Ptr: " + psk.createNewPointerInteger(PTR_INPUT_KEY, elements));
-		psk.createInputMemoryBuffer(PTR_INPUT_KEY);
+		psk.createInputOutputMemoryBuffer(PTR_INPUT_KEY);
 		
 		Map<String,String> defineMap = Maps.newHashMap();
 		defineMap.put(D_TYPE, "int");
