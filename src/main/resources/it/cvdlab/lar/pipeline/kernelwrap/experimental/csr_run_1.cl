@@ -12,11 +12,8 @@ __kernel void m_mul_m_count(
           const uint work_per_item)
 {
 	// Offset di moltiplicazione per riga ( tutta la computazione dei moduli sull'host)
-	unsigned int row_start = get_local_id(0) * get_group_id(0) * work_per_item;
-	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * get_group_id(0) * work_per_item), (uint) ROWS_A);
-  
-  	// Shortcut al risultato
-	__global unsigned char * result = resultBig + get_group_id(0) * row_start;
+	unsigned int row_start = get_global_id(0) * work_per_item;
+	unsigned int row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) ROWS_A);
   
 	// Variabili riutilizzabili
 	unsigned int row_a;
@@ -67,6 +64,11 @@ __kernel void m_mul_m_count(
 			}
 		}
 		
-		result[ row ] = nnz_row;
+		resultBig[ row_a ] = nnz_row;
+	}
+	
+	barrier(CLK_GLOBAL_MEM_FENCE);
+	if ((row_stop == ROWS_A) && (row_start < row_stop)) {
+		resultBig[ ROWS_A ] = resultBig[ ROWS_A - 1 ];
 	}
 }

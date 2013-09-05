@@ -48,11 +48,15 @@ public class CsrMatrix {
 	}
 	
 	public CsrMatrix(List<Integer> rowPtr, List<Integer> colData, int rowshape, int colshape) {
-		this( rowPtr, colData, Floats.asList( binarydataInit(colData.size(), 1F)  ), rowshape, colshape);
+		this( rowPtr, colData, Collections.nCopies(colData.size(), 1F), rowshape, colshape);
 	}	
 	
 	public CsrMatrix(int[] rowPtr, int[] colData, int rowshape, int colshape) {
 		this( Ints.asList(rowPtr), Ints.asList(colData), rowshape, colshape);
+	}
+	
+	public CsrMatrix(CsrMatrix otherMatrix) {
+		this(otherMatrix.getRowPointer(), otherMatrix.getColdata(), otherMatrix.getData(), otherMatrix.getRowshape(), otherMatrix.getColshape());
 	}	
 	
 	@JsonIgnore

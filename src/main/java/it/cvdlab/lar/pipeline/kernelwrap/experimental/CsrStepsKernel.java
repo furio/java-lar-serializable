@@ -2,6 +2,7 @@ package it.cvdlab.lar.pipeline.kernelwrap.experimental;
 
 import it.cvdlab.lar.model.CsrMatrix;
 import it.cvdlab.lar.model.helpers.PointerUtils;
+import it.cvdlab.lar.model.serialize.CsrMatrixSerializable;
 import it.cvdlab.lar.pipeline.helpers.MultipleFind;
 
 import java.util.Collections;
@@ -13,8 +14,8 @@ import org.bridj.Pointer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.nativelibs4java.opencl.CLEvent;
-import com.nativelibs4java.opencl.LocalSize;
 import com.nativelibs4java.opencl.CLPlatform.DeviceFeature;
+import com.nativelibs4java.opencl.LocalSize;
 
 public class CsrStepsKernel extends RunningKernel {
 	private static DeviceFeature runOn = DeviceFeature.GPU;
@@ -22,11 +23,11 @@ public class CsrStepsKernel extends RunningKernel {
 	private static String[] KERNEL_FILE = {"csr_run_1.cl", "prefixsum.cl", "csr_run_2.cl"};
 	private static String[] KERNEL_FUNCTION = {"m_mul_m_count","kernel__scan_block_anylength","m_mul_m"};
 	
+	private static int ROWS_PER_CORE = 4000;
+	
 	private static String D_TYPE = "T";
 	private static String D_ROWS_A = "ROWS_A";
 	private static String D_ROWS_B = "ROWS_B";
-	
-	private static String PTR_INPUT_KEY = "input";
 	
 	private static String PTR_ROWPTR_A = "rowptr_a";
 	private static String PTR_ROWPTR_B = "rowptr_b";
@@ -37,6 +38,8 @@ public class CsrStepsKernel extends RunningKernel {
 	private static String PTR_DATA_A = "data_a";
 	private static String PTR_DATA_B = "data_b";
 	private static String PTR_DATA_C = "data_c";
+	
+	private static String PTR_INPUT_KEY = PTR_ROWPTR_C;
 
 	public CsrStepsKernel(DeviceFeature runOn2) {
 		super(runOn2);
@@ -68,15 +71,27 @@ public class CsrStepsKernel extends RunningKernel {
 		defineMap.put(D_ROWS_A, String.valueOf( mtxOne.getRowCount() ) );
 		defineMap.put(D_ROWS_B, String.valueOf( mtxTwoT.getRowCount() ) );
 		
+		System.out.println("ROWS_A " + mtxOne.getRowCount());
+		System.out.println("ROWS_B " + mtxTwoT.getRowCount());
+		
 		this.loadkernelSourceFromFile(CsrStepsKernel.class.getResource(KERNEL_FILE[0]));
 		this.initProgram(defineMap, null);
 		this.addFasterMathOptions();
 		this.initKernel(KERNEL_FUNCTION[0]);
 		
-		int rowsWorkGroup = (int)this.getMaxKernelWorkgroupSize();
-		int[] localWorkSize = { rowsWorkGroup };
-		int[] globalWorkSize = { MultipleFind.toMultipleOf(mtxOne.getRowCount() / rowsWorkGroup, rowsWorkGroup)};
 		// TODO: decide number of rows per core
+		int rowsWorkGroup = (int)this.getMaxKernelWorkgroupSize();
+		int rowsDivisor = mtxOne.getRowCount() * rowsWorkGroup / ROWS_PER_CORE;
+		int howManyWGs = 1;
+		if (rowsDivisor != 0) {
+			howManyWGs = mtxOne.getRowCount() / rowsDivisor;
+			if ((mtxOne.getRowCount() % rowsDivisor) != 0) {
+				howManyWGs++;
+			}			
+		}
+		
+		int[] localWorkSize = { rowsWorkGroup };
+		int[] globalWorkSize = { howManyWGs*rowsWorkGroup };
 		
 		System.out.println("getMaxKernelWorkgroupSize " + this.getMaxKernelWorkgroupSize());
 		System.out.println("localWorkSize[0] " + localWorkSize[0]);
@@ -87,7 +102,7 @@ public class CsrStepsKernel extends RunningKernel {
 							this.getBufferInteger(PTR_ROWPTR_B),
 							this.getBufferInteger(PTR_COLDATA_B),
 							this.getBufferInteger(PTR_ROWPTR_C),
-							1);
+							ROWS_PER_CORE);
 		
 		CLEvent evtFinish = this.enqueueKernel(localWorkSize, globalWorkSize);
 		
@@ -128,11 +143,11 @@ public class CsrStepsKernel extends RunningKernel {
 		System.out.println("globalWorkSize[0] " + globalWorkSize[0]);
 		
 		this.setKernelArgs( new LocalSize(this.getMaxKernelWorkgroupSize()*(Integer.SIZE/8)),
-							this.getBufferInteger(PTR_ROWPTR_C),
+							this.getBufferInteger(PTR_INPUT_KEY),
 							B, elementSize, blockSize);
 		
 		CLEvent evtFinish = this.enqueueKernel(localWorkSize, globalWorkSize);
-		Pointer<Integer> ptrOut = this.getBufferInteger(PTR_ROWPTR_C).read(this.getQueue(), evtFinish);
+		Pointer<Integer> ptrOut = this.getBufferInteger(PTR_INPUT_KEY).read(this.getQueue(), evtFinish);
 		List<Integer> lRes = PointerUtils.copyFromPointer(ptrOut);
 		
 		ptrOut.release();
@@ -142,19 +157,104 @@ public class CsrStepsKernel extends RunningKernel {
 		return lRes;
 	}
 	
-	public void runCsrStep2(CsrMatrix mtxOne, CsrMatrix mtxTwo) {
+	public CsrMatrix runCsrStep2(CsrMatrix mtxOne, CsrMatrix mtxTwo, int nnzCount) {
+		CsrMatrix mtxTwoT = mtxTwo.transpose();
 		
+		this.createNewPointerFloat(PTR_DATA_A, mtxOne.getData());
+		this.createInputMemoryBuffer(PTR_DATA_A);
+		this.createNewPointerFloat(PTR_DATA_B, mtxTwoT.getData());
+		this.createInputMemoryBuffer(PTR_DATA_B);
+		
+		this.createOutputMemoryBufferInteger(PTR_COLDATA_C, nnzCount);
+		this.createOutputMemoryBufferFloat(PTR_DATA_C, nnzCount);
+		
+		Map<String,String> defineMap = Maps.newHashMap();
+		defineMap.put(D_ROWS_A, String.valueOf( mtxOne.getRowCount() ) );
+		defineMap.put(D_ROWS_B, String.valueOf( mtxTwoT.getRowCount() ) );
+		
+		this.loadkernelSourceFromFile(CsrStepsKernel.class.getResource(KERNEL_FILE[2]));
+		this.initProgram(defineMap, null);
+		this.addFasterMathOptions();
+		this.initKernel(KERNEL_FUNCTION[2]);
+		
+		// TODO: decide number of rows per core
+		int rowsWorkGroup = (int)this.getMaxKernelWorkgroupSize();
+		int rowsDivisor = mtxOne.getRowCount() * rowsWorkGroup / ROWS_PER_CORE;
+		int howManyWGs = mtxOne.getRowCount() / rowsDivisor;
+		if ((mtxOne.getRowCount() % rowsDivisor) != 0) {
+			howManyWGs++;
+		}		
+		int[] localWorkSize = { rowsWorkGroup };
+		int[] globalWorkSize = { howManyWGs*rowsWorkGroup };
+		
+		
+		System.out.println("getMaxKernelWorkgroupSize " + this.getMaxKernelWorkgroupSize());
+		System.out.println("localWorkSize[0] " + localWorkSize[0]);
+		System.out.println("globalWorkSize[0] " + globalWorkSize[0]);
+		
+		this.setKernelArgs( this.getBufferInteger(PTR_ROWPTR_A),
+							this.getBufferInteger(PTR_COLDATA_A),
+							this.getBufferFloat(PTR_DATA_A),
+							this.getBufferInteger(PTR_ROWPTR_B),
+							this.getBufferInteger(PTR_COLDATA_B),
+							this.getBufferFloat(PTR_DATA_B),
+							this.getBufferInteger(PTR_ROWPTR_C),
+							this.getBufferInteger(PTR_COLDATA_C),
+							this.getBufferFloat(PTR_DATA_C),
+							ROWS_PER_CORE);
+		
+		CLEvent evtFinish = this.enqueueKernel(localWorkSize, globalWorkSize);
+		
+		// Debug
+		Pointer<Integer> ptrOut = this.getBufferInteger(PTR_ROWPTR_C).read(this.getQueue(), evtFinish);
+		List<Integer> lRes = PointerUtils.copyFromPointer(ptrOut);
+		System.out.println(lRes);
+		
+		Pointer<Integer> ptrColOut = this.getBufferInteger(PTR_COLDATA_C).read(this.getQueue());
+		List<Integer> lColRes = PointerUtils.copyFromPointer(ptrColOut);
+		System.out.println(lColRes);
+
+		Pointer<Float> ptrDataOut = this.getBufferFloat(PTR_DATA_C).read(this.getQueue());
+		List<Float> lDataRes = PointerUtils.copyFromPointer(ptrDataOut);
+		System.out.println(lDataRes);
+		
+		// Release
+		// ------
+		ptrOut.release();
+		ptrColOut.release();
+		ptrDataOut.release();
+		
+		this.releaseAll(evtFinish);
+		evtFinish.release();
+		
+		return new CsrMatrix(lRes, lColRes, lDataRes, mtxOne.getRowshape(), mtxTwoT.getRowshape());		
 	}
 	
 	/**
 	 * @param args
+	 * @throws Exception 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
+		CsrMatrix mtxA = CsrMatrix.fromFlattenArray(matrixTest, 5);
+		CsrMatrix mtxB = mtxA.transpose();
+		
 		CsrStepsKernel cskRun = new CsrStepsKernel(runOn);
 		System.out.println("Context: " + cskRun.initContext());
 		System.out.println("Queue: " + cskRun.initQueue());
+		cskRun.runCsrStep1(mtxA, mtxB);
+		System.out.println( cskRun.runPrefixScan(mtxA.getRowPointer().size()) );
 		
-		cskRun.releaseAll();
-	}	
+		CsrMatrix result = mtxA.multiply(mtxB);
+		System.out.println(result);
+		
+		
+		cskRun.releaseAll();	
+	}
+	
+	public static float[] matrixTest = { 0F, 0F, 0F, 2F, 5F,
+										0F, 2F, 7F, 8F, 0F,
+										1F, 3F, 0F, 0F, 0F,
+										4F, 5F, 0F, 0F, 4F,
+										0F, 7F, 7F, 0F, 0F };
 }

@@ -17,8 +17,8 @@ __kernel void m_mul_m(
           const uint work_per_item)
 {
 	// Offset di moltiplicazione per riga ( tutta la computazione dei moduli sull'host)
-	unsigned int row_start = get_local_id(0) * get_group_id(0) * work_per_item;
-	unsigned int row_stop  = min( (uint) ((get_local_id(0) + 1) * get_group_id(0) * work_per_item), (uint) ROWS_A);
+	unsigned int row_start = get_global_id(0) * work_per_item;
+	unsigned int row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) ROWS_A);
   
 	// Variabili riutilizzabili
 	unsigned int row_a;
