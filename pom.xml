@@ -6,6 +6,10 @@
   
 	<repositories>
 		<repository>
+		    <id>jcuda</id>
+		    <url>file://${basedir}/repo</url>
+		</repository>	
+		<repository>
 			<id>sonatype</id>
 			<name>Sonatype OSS Snapshots Repository</name>
 			<url>http://oss.sonatype.org/content/groups/public</url>
@@ -19,10 +23,6 @@
 			<id>java.net</id>
 			<name>java.net stable repo</name>
 			<url>https://maven.java.net/content/groups/public</url>
-		</repository>		
-		<repository>
-		    <id>jcuda local repo</id>
-		    <url>file://${project.basedir}/repo</url>
 		</repository>		
 	</repositories>
 	
@@ -156,4 +156,6 @@
 	   </dependency>
 	</dependencies>
 
+	<name>java-lar-serializable</name>
+	<url>https://github.com/furio/java-lar-serializable</url>
 </project>

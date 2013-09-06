@@ -5,3 +5,5 @@ groupId.artifactId[.source]_version[.SNAPSHOT].jar
 and then run py script in root project directory
 
 (Reference: https://github.com/nikita-volkov/install-to-project-repo)
+
+p.s.: jar will be pushed to git only in repo directory
