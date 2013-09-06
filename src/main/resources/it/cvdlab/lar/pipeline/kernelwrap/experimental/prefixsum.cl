@@ -159,3 +159,5 @@ void kernel__scan_block_anylength(
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 }
+
+// End of kernel

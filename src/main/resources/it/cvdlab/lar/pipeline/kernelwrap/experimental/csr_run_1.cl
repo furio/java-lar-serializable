@@ -2,14 +2,13 @@
 // spezzo la matrice A in x gruppi di y righe
 // ogni core si fa N righe nel gruppo
 
-
 __kernel void m_mul_m_count(
           __global const unsigned int * row_indices_a,
           __global const unsigned int * column_indices_a,
           __global const unsigned int * row_indices_b,
           __global const unsigned int * column_indices_b,          
           __global unsigned int * resultBig,
-          const uint work_per_item)
+          const uint work_per_item) 
 {
 	// Offset di moltiplicazione per riga ( tutta la computazione dei moduli sull'host)
 	unsigned int row_start = get_global_id(0) * work_per_item;
@@ -40,7 +39,7 @@ __kernel void m_mul_m_count(
    		// evita serializzazione d'accesso alla memoria
    		// qualcosa tipo row_b = get_global_id; row_b < ROWS_B + get_global_id
    		// (rowb + x) % ROWS_B, se ROWS_B è potenza di 2 è pure meglio
-		for(unsigned int row_b = 0; row_b < ROWS_B; ++row_b) {
+		for (row_b = 0; row_b < ROWS_B; ++row_b) {
 			col_ptr_end_b = row_indices_b[row_b + 1];
 			
 			// While variables
@@ -72,3 +71,5 @@ __kernel void m_mul_m_count(
 		resultBig[ ROWS_A ] = resultBig[ ROWS_A - 1 ];
 	}
 }
+
+// End of kernel

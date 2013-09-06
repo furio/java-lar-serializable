@@ -99,3 +99,5 @@ __kernel void many_vec_mul_bitwise_binary(
 		result[ row ] = (unsigned char)(dot_prod & 1); // modulo 2
 	}
 }
+
+// End of kernel

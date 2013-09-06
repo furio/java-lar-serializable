@@ -4,6 +4,7 @@ import it.cvdlab.lar.model.CsrMatrix;
 import it.cvdlab.lar.model.helpers.PointerUtils;
 import it.cvdlab.lar.model.serialize.CsrMatrixSerializable;
 import it.cvdlab.lar.pipeline.helpers.MultipleFind;
+import it.cvdlab.lar.pipeline.helpers.TransformNumberList;
 
 import java.util.Collections;
 import java.util.List;
@@ -157,16 +158,17 @@ public class CsrStepsKernel extends RunningKernel {
 		return lRes;
 	}
 	
-	public CsrMatrix runCsrStep2(CsrMatrix mtxOne, CsrMatrix mtxTwo, int nnzCount) {
+	public CsrMatrix runCsrStep2(CsrMatrix mtxOne, CsrMatrix mtxTwo, List<Integer> lRes) {
 		CsrMatrix mtxTwoT = mtxTwo.transpose();
+		int nnzCount = lRes.get( lRes.size() - 1);
 		
-		this.createNewPointerFloat(PTR_DATA_A, mtxOne.getData());
+		this.createNewPointerInteger(PTR_DATA_A, TransformNumberList.toInteger( mtxOne.getData() ));
 		this.createInputMemoryBuffer(PTR_DATA_A);
-		this.createNewPointerFloat(PTR_DATA_B, mtxTwoT.getData());
+		this.createNewPointerInteger(PTR_DATA_B, TransformNumberList.toInteger( mtxTwoT.getData() ));
 		this.createInputMemoryBuffer(PTR_DATA_B);
 		
 		this.createOutputMemoryBufferInteger(PTR_COLDATA_C, nnzCount);
-		this.createOutputMemoryBufferFloat(PTR_DATA_C, nnzCount);
+		this.createOutputMemoryBufferInteger(PTR_DATA_C, nnzCount);
 		
 		Map<String,String> defineMap = Maps.newHashMap();
 		defineMap.put(D_ROWS_A, String.valueOf( mtxOne.getRowCount() ) );
@@ -180,10 +182,14 @@ public class CsrStepsKernel extends RunningKernel {
 		// TODO: decide number of rows per core
 		int rowsWorkGroup = (int)this.getMaxKernelWorkgroupSize();
 		int rowsDivisor = mtxOne.getRowCount() * rowsWorkGroup / ROWS_PER_CORE;
-		int howManyWGs = mtxOne.getRowCount() / rowsDivisor;
-		if ((mtxOne.getRowCount() % rowsDivisor) != 0) {
-			howManyWGs++;
-		}		
+		int howManyWGs = 1;
+		if (rowsDivisor != 0) {
+			howManyWGs = mtxOne.getRowCount() / rowsDivisor;
+			if ((mtxOne.getRowCount() % rowsDivisor) != 0) {
+				howManyWGs++;
+			}			
+		}
+		
 		int[] localWorkSize = { rowsWorkGroup };
 		int[] globalWorkSize = { howManyWGs*rowsWorkGroup };
 		
@@ -194,40 +200,34 @@ public class CsrStepsKernel extends RunningKernel {
 		
 		this.setKernelArgs( this.getBufferInteger(PTR_ROWPTR_A),
 							this.getBufferInteger(PTR_COLDATA_A),
-							this.getBufferFloat(PTR_DATA_A),
+							this.getBufferInteger(PTR_DATA_A),
 							this.getBufferInteger(PTR_ROWPTR_B),
 							this.getBufferInteger(PTR_COLDATA_B),
-							this.getBufferFloat(PTR_DATA_B),
+							this.getBufferInteger(PTR_DATA_B),
 							this.getBufferInteger(PTR_ROWPTR_C),
 							this.getBufferInteger(PTR_COLDATA_C),
-							this.getBufferFloat(PTR_DATA_C),
+							this.getBufferInteger(PTR_DATA_C),
 							ROWS_PER_CORE);
 		
 		CLEvent evtFinish = this.enqueueKernel(localWorkSize, globalWorkSize);
 		
 		// Debug
-		Pointer<Integer> ptrOut = this.getBufferInteger(PTR_ROWPTR_C).read(this.getQueue(), evtFinish);
-		List<Integer> lRes = PointerUtils.copyFromPointer(ptrOut);
-		System.out.println(lRes);
-		
-		Pointer<Integer> ptrColOut = this.getBufferInteger(PTR_COLDATA_C).read(this.getQueue());
+		Pointer<Integer> ptrColOut = this.getBufferInteger(PTR_COLDATA_C).read(this.getQueue(), evtFinish);
 		List<Integer> lColRes = PointerUtils.copyFromPointer(ptrColOut);
 		System.out.println(lColRes);
 
-		Pointer<Float> ptrDataOut = this.getBufferFloat(PTR_DATA_C).read(this.getQueue());
-		List<Float> lDataRes = PointerUtils.copyFromPointer(ptrDataOut);
+		Pointer<Integer> ptrDataOut = this.getBufferInteger(PTR_DATA_C).read(this.getQueue());
+		List<Integer> lDataRes = PointerUtils.copyFromPointer(ptrDataOut);
 		System.out.println(lDataRes);
 		
 		// Release
 		// ------
-		ptrOut.release();
 		ptrColOut.release();
 		ptrDataOut.release();
 		
-		this.releaseAll(evtFinish);
 		evtFinish.release();
 		
-		return new CsrMatrix(lRes, lColRes, lDataRes, mtxOne.getRowshape(), mtxTwoT.getRowshape());		
+		return new CsrMatrix(lRes, lColRes, TransformNumberList.toFloat(lDataRes), mtxOne.getRowshape(), mtxTwoT.getRowshape());		
 	}
 	
 	/**
@@ -243,7 +243,10 @@ public class CsrStepsKernel extends RunningKernel {
 		System.out.println("Context: " + cskRun.initContext());
 		System.out.println("Queue: " + cskRun.initQueue());
 		cskRun.runCsrStep1(mtxA, mtxB);
-		System.out.println( cskRun.runPrefixScan(mtxA.getRowPointer().size()) );
+		List<Integer> prefixSumRes = cskRun.runPrefixScan(mtxA.getRowPointer().size()); 
+		System.out.println( prefixSumRes );
+		CsrMatrix resultCL = cskRun.runCsrStep2(mtxA, mtxB, prefixSumRes);
+		System.out.println(resultCL);
 		
 		CsrMatrix result = mtxA.multiply(mtxB);
 		System.out.println(result);

@@ -34,11 +34,10 @@ __kernel void m_mul_m(
 	unsigned int col_val_res_start;
 	unsigned int col_val_res_end;
 	
-	unsigned int curr_res = 0;
+	unsigned int curr_res;
 	
 	// Inizia computazione
 	for (row_a = row_start; row_a < row_stop; ++row_a) {
-  		nnz_row = 0;
 		col_ptr_end_a = row_indices_a[row_a + 1];
 		// Result
 		col_val_res_start = rowPtr[row_a];
@@ -49,13 +48,14 @@ __kernel void m_mul_m(
    		// questo for deve essere scalato, ogni wi parte da una riga diversa e gira
    		// evita serializzazione d'accesso alla memoria
    		// qualcosa tipo row_b = get_global_id; row_b < ROWS_B + get_global_id
-   		// (rowb + x) % ROWS_B, se ROWS_B è potenza di 2 è pure meglio
-		for(unsigned int row_b = 0; (row_b < ROWS_B) && (col_val_res_start < col_val_res_end); ++row_b) {
+   		// (rowb + x) % ROWS_B, se ROWS_B ï¿½ potenza di 2 ï¿½ pure meglio
+		for(row_b = 0; (row_b < ROWS_B) && (col_val_res_start < col_val_res_end); ++row_b) {
 			col_ptr_end_b = row_indices_b[row_b + 1];
 			
 			// While variables
 			col_ptr_a = row_indices_a[row_a];
 			col_ptr_b = row_indices_b[row_b];
+			curr_res = 0;
 			
 			while ((col_ptr_a < col_ptr_end_a) && (col_ptr_b < col_ptr_end_b)) {
 			
@@ -77,3 +77,5 @@ __kernel void m_mul_m(
 		}
 	}
 }
+
+// End of kernel
