@@ -2,7 +2,6 @@ package it.cvdlab.lar.pipeline.kernelwrap.experimental;
 
 import it.cvdlab.lar.model.CsrMatrix;
 import it.cvdlab.lar.model.helpers.PointerUtils;
-import it.cvdlab.lar.model.serialize.CsrMatrixSerializable;
 import it.cvdlab.lar.pipeline.helpers.MultipleFind;
 import it.cvdlab.lar.pipeline.helpers.TransformNumberList;
 

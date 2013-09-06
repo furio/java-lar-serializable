@@ -1,7 +1,5 @@
 package it.cvdlab.lar.model;
 
-import it.cvdlab.lar.pipeline.helpers.TransformNumberList;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
