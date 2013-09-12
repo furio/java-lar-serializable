@@ -81,9 +81,13 @@ public class LARCsrSteps {
 		mapOfPointers = Maps.newHashMap();
 	}
 	
-	private LARCsrSteps() { init(); }
+	private LARCsrSteps() { 
+		init();
+		this.program = Lists.newArrayList();
+		this.kernel = Lists.newArrayList();
+	}
 	
-	private void clearAllocatedObjects() {
+	void clearAllocatedObjects() {
 		if (queue != null) {
 			queue.flush();
 			queue.release();
@@ -94,11 +98,25 @@ public class LARCsrSteps {
 		clearAllocatedCLObjects();
 		clearAllocatedPTRObjects();
 		
+		System.err.println("Clear kernel & program");
+		clearKernelProgram();
+		
+		System.err.println("Clear context");
 		if (context != null) {
 			context.release();
 			
 			context = null;
 		}		
+	}
+	
+	private void clearKernelProgram() {
+		for(int i = this.kernel.size() - 1; i <= 0; --i) {
+			this.kernel.get(i).release();
+			this.program.get(i).release();
+		}
+
+		this.kernel.clear();
+		this.program.clear();
 	}
 	
 	private CLContext context;
@@ -126,6 +144,7 @@ public class LARCsrSteps {
 
 		if (this.context == null) {
 			clearAllocatedObjects();
+			System.err.println("No context");
 			return false;
 		}
 		
@@ -147,12 +166,14 @@ public class LARCsrSteps {
 	
 	boolean initQueue() {
 		if (this.context == null) {
+			System.err.println("No context");
 			return false;
 		}
 		
 		this.queue = context.createDefaultQueue();
 		if (this.queue == null) {
 			clearAllocatedObjects();
+			System.err.println("No queue");
 			return false;
 		}
 		
@@ -214,7 +235,7 @@ public class LARCsrSteps {
 			return false;
 		}
 		
-		System.err.println("Kernel source");
+		System.err.println("Kernel source: " + KERNEL_FILE[0]);
 		// Read the program sources and compile them :
 		String kernelSource = null;
 		try {
@@ -330,7 +351,7 @@ public class LARCsrSteps {
 		System.out.println("localWorkSize[0] " + localWorkSize[0]);
 		System.out.println("globalWorkSize[0] " + globalWorkSize[0]);
 		
-		kernel.get(0).setArgs( new LocalSize(this.maxKernelWorkgroupSize*(Integer.SIZE/8)),
+		kernel.get(1).setArgs( new LocalSize(this.maxKernelWorkgroupSize*(Integer.SIZE/8)),
 							mapOfBuffers.get(PTR_INPUT_KEY),
 							B, elementSize, blockSize);
 		
@@ -456,6 +477,17 @@ public class LARCsrSteps {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
+		CsrMatrix mtxA = CsrMatrix.fromFlattenArray(matrixTest, 5);
+		CsrMatrix mtxB = mtxA.transpose();
+		
+		LARCsrSteps lcsr = new LARCsrSteps();
+		lcsr.initQueue();
+		lcsr.runCsrStep1(mtxA, mtxB);
+		List<Integer> prefixSumRes = lcsr.runPrefixScan(mtxA.getRowPointer().size()); 
+		System.out.println( prefixSumRes );		
+		
+		lcsr.clearAllocatedObjects();
 		/*
 		 * 		CsrMatrix mtxA = CsrMatrix.fromFlattenArray(matrixTest, 5);
 		CsrMatrix mtxB = mtxA.transpose();
@@ -475,6 +507,8 @@ public class LARCsrSteps {
 		
 		cskRun.releaseAll();
 		*/
+		
+		System.gc();
 	}
 	
 	public static float[] matrixTest = { 0F, 0F, 0F, 2F, 5F,

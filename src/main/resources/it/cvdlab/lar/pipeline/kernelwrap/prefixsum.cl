@@ -122,7 +122,19 @@ void kernel__scan_block_anylength(
 		if (offsetIdx > size-1) return;
 		
 		// Step 1: Read TC elements from global (off-chip) memory to local memory (on-chip)
-		T input = localBuf[idx] = dataSet[offsetIdx];
+		T input = localBuf[idx] = dataSet[offsetIdx];		
+		
+		/*
+		// This version try to avoid bank conflicts and improve memory access serializations !
+		if (lane < 1)
+		{
+			__global T* currentOffset = inputDatas + offsetIdx;
+			vstore16(vload16(0, currentOffset),  0, localBuf);
+			vstore16(vload16(0, currentOffset + 16), 16, localBuf);
+		}
+		barrier(CLK_LOCAL_MEM_FENCE);
+		T input = localBuf[idx];
+		*/
 		
 		barrier(CLK_LOCAL_MEM_FENCE);
 		
@@ -147,3 +159,5 @@ void kernel__scan_block_anylength(
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 }
+
+// End of kernel
