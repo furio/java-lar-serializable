@@ -5,7 +5,6 @@ import it.cvdlab.lar.model.helpers.CLEngineConfig;
 import it.cvdlab.lar.model.helpers.PointerUtils;
 import it.cvdlab.lar.pipeline.helpers.MultipleFind;
 import it.cvdlab.lar.pipeline.helpers.TransformNumberList;
-import it.cvdlab.lar.pipeline.kernelwrap.experimental.CsrStepsKernel;
 
 import java.io.IOException;
 import java.nio.ByteOrder;
