@@ -52,7 +52,7 @@ chunksize = nx * ny + nx * nz + ny * nz + 3 * nx * ny * nz
 log(1, ["chunksize = " + str(chunksize)]);
 # chunksize = 798720 (nx=ny=nz=64)
 
-MAX_CHUNKS = 1024 #1024
+MAX_CHUNKS = 64 #1024
 log(1, ["MAX_CHUNKS = " + str(MAX_CHUNKS)]);
 
 # ------------------------------------------------------------
@@ -160,7 +160,7 @@ for i in range(MAX_CHUNKS):
 			vertex_count = vertex_count + 1
 			
 		fileFaces.write("f ")
-		fileFaces.write(str(old_vertex_count))
+		fileFaces.write(str(old_vertex_count + 0))
 		fileFaces.write(" ")
 		fileFaces.write(str(old_vertex_count + 1))
 		fileFaces.write(" ")
@@ -168,11 +168,11 @@ for i in range(MAX_CHUNKS):
 		fileFaces.write("\n")
 
 		fileFaces.write("f ")
-		fileFaces.write(str(old_vertex_count + 1))
-		fileFaces.write(" ")
-		fileFaces.write(str(old_vertex_count + 2))
+		fileFaces.write(str(old_vertex_count + 0))
 		fileFaces.write(" ")
 		fileFaces.write(str(old_vertex_count + 3))
+		fileFaces.write(" ")
+		fileFaces.write(str(old_vertex_count + 2))
 		fileFaces.write("\n")		
 
 	timer_stop();
