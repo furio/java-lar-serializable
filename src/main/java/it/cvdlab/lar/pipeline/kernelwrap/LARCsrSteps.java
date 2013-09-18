@@ -441,7 +441,7 @@ public class LARCsrSteps {
 		System.out.println("localWorkSize[0] " + localWorkSize[0]);
 		System.out.println("globalWorkSize[0] " + globalWorkSize[0]);
 		
-		kernel.get(0).setArgs( (CLBuffer<Integer>) mapOfBuffers.get(PTR_ROWPTR_A),
+		kernel.get(2).setArgs( (CLBuffer<Integer>) mapOfBuffers.get(PTR_ROWPTR_A),
 				(CLBuffer<Integer>) mapOfBuffers.get(PTR_COLDATA_A),
 				(CLBuffer<Integer>) mapOfBuffers.get(PTR_DATA_A),
 				(CLBuffer<Integer>) mapOfBuffers.get(PTR_ROWPTR_B),
@@ -485,6 +485,8 @@ public class LARCsrSteps {
 		lcsr.runCsrStep1(mtxA, mtxB);
 		List<Integer> prefixSumRes = lcsr.runPrefixScan(mtxA.getRowPointer().size()); 
 		System.out.println( prefixSumRes );		
+		CsrMatrix resultCL = lcsr.runCsrStep2(mtxA, mtxB, prefixSumRes);
+		System.out.println(resultCL);
 		
 		lcsr.clearAllocatedObjects();
 		/*
