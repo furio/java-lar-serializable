@@ -26,6 +26,8 @@
 //
 // References :
 // ------------
+// https://code.google.com/p/clpp/
+// ------------
 // http://graphics.idav.ucdavis.edu/publications/print_pub?pub_id=1041
 //
 // To read :
