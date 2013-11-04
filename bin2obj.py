@@ -151,11 +151,11 @@ for i in range(MAX_CHUNKS):
 		
 		for vtx in FV[f]:
 			fileVertex.write("v ")
-			fileVertex.write(str(V[vtx][0] + zStart))
+			fileVertex.write(str(V[vtx][0] + xStart))
 			fileVertex.write(" ")
-			fileVertex.write(str(V[vtx][1] + xStart))
+			fileVertex.write(str(V[vtx][1] + yStart))
 			fileVertex.write(" ")
-			fileVertex.write(str(V[vtx][2] + yStart))
+			fileVertex.write(str(V[vtx][2] + zStart))
 			fileVertex.write("\n")
 			vertex_count = vertex_count + 1
 			

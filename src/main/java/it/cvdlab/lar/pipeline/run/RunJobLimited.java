@@ -76,17 +76,22 @@ public class RunJobLimited {
 			output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
 		}
 		
-		System.out.println("Bordo3: " + input_bordo);
-		System.out.println("Selettori: " + input_selettori);
-		System.out.println("Output: " + output_vettori);
-		System.out.println("Binary output: " + use_binary);
-		
-		System.out.println("Lettura bordo3");
-		CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
-		System.out.println("Lettura q.c.");
-		InputVectorsContainer ivc = InputVectorsSerialize.fromFile(input_selettori);
-		
-		runJob(bordo3, ivc, output_vettori, use_binary);
+		try {
+			System.out.println("Bordo3: " + input_bordo);
+			System.out.println("Selettori: " + input_selettori);
+			System.out.println("Output: " + output_vettori);
+			System.out.println("Binary output: " + use_binary);
+			
+			System.out.println("Lettura bordo3");
+			CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
+			System.out.println("Lettura q.c.");
+			InputVectorsContainer ivc = InputVectorsSerialize.fromFile(input_selettori);
+			
+			runJob(bordo3, ivc, output_vettori, use_binary);			
+		} catch(Exception e) {
+			System.out.println("Exception while running: " + e.toString());
+			System.exit(2);
+		}
 	}
 	
 	private static void runJob(CsrMatrix b3, InputVectorsContainer ivc, String outFile, boolean binaryOutput) {
