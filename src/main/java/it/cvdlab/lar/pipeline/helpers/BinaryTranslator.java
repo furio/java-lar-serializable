@@ -34,6 +34,16 @@ public class BinaryTranslator {
 		return returnArray;
 	}
 	
+	public static int[][] fromByteArrays(List<List<Byte>> source) {
+		int[][] returnArray = new int[source.size()][];
+		
+		for(int i = 0; i < source.size(); ++i) {
+			returnArray[i] = fromArray(ArrayUtils.toPrimitive( source.get(i).toArray(new Byte[1]) ));
+		}
+		
+		return returnArray;
+	}	
+	
 	public static int[][] fromArrays(int[][] source) {
 		int[][] returnArray = new int[source.length][];
 		
@@ -44,8 +54,24 @@ public class BinaryTranslator {
 		return returnArray;
 	}	
 	
+	public static int[] fromArray(byte[] source) {
+		return toBitsetIntegerArray(source);
+	}
+	
 	public static int[] fromArray(int[] source) {
 		return toBitsetIntegerArray(source);
+	}
+	
+	private static int[] toBitsetIntegerArray(byte[] source) {
+		BitSet bsTemp = new BitSet(source.length);
+		
+		for(int i = 0; i < source.length; ++i) {
+			if (source[i] > 0) {
+				bsTemp.set(i);
+			}
+		}
+		
+		return bits2Ints(bsTemp, source.length);
 	}
 	
 	private static int[] toBitsetIntegerArray(int[] source) {

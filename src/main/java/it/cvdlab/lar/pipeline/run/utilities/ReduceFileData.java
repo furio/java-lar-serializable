@@ -30,11 +30,11 @@ public class ReduceFileData {
 		
 		System.out.println("Taglio");
 		InputVectorsContainer ivcNew = new InputVectorsContainer();
-		List<List<Integer>> listNewVett = Lists.newArrayList();
+		List<List<Byte>> listNewVett = Lists.newArrayList();
 		List<List<Integer>> listNewOff = Lists.newArrayList();
 		
 		int toCut = MAXIMUM_ARR;
-		for(List<Integer> currList: ivc.getVectorList()) {
+		for(List<Byte> currList: ivc.getVectorList()) {
 			listNewVett.add(currList);
 			if (--toCut == 0) {
 				break;

@@ -8,6 +8,7 @@ import it.cvdlab.lar.model.serialize.InputVectorsSerialize;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 
 public class GenerateTestFiles {
@@ -24,18 +25,18 @@ public class GenerateTestFiles {
 		CsrMatrixSerializable.toFile(csrMatrixOne, DefaultFileNames.BORDO3_FILE);
 		
 		int[] offset = {0,0,0};
-		int[] vettore1 = {1, 1, 1, 0, 1};
-		int[] vettore2 = {0, 1, 0, 0, 0};
-		int[] vettore3 = {0, 0, 1, 0, 0};
-		int[] vettore4 = {0, 0, 0, 1, 0};
-		int[] vettore5 = {1, 1, 1, 0, 1};
+		byte[] vettore1 = {1, 1, 1, 0, 1};
+		byte[] vettore2 = {0, 1, 0, 0, 0};
+		byte[] vettore3 = {0, 0, 1, 0, 0};
+		byte[] vettore4 = {0, 0, 0, 1, 0};
+		byte[] vettore5 = {1, 1, 1, 0, 1};
 		
-		List<List<Integer>> outsideList = Lists.newArrayList();
-		outsideList.add(Ints.asList(vettore1));
-		outsideList.add(Ints.asList(vettore2));
-		outsideList.add(Ints.asList(vettore3));
-		outsideList.add(Ints.asList(vettore4));
-		outsideList.add(Ints.asList(vettore5));
+		List<List<Byte>> outsideList = Lists.newArrayList();
+		outsideList.add(Bytes.asList(vettore1));
+		outsideList.add(Bytes.asList(vettore2));
+		outsideList.add(Bytes.asList(vettore3));
+		outsideList.add(Bytes.asList(vettore4));
+		outsideList.add(Bytes.asList(vettore5));
 		
 		List<List<Integer>> offsetList = Lists.newArrayList();
 		offsetList.add(Ints.asList(offset));

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public class InputVectorsContainer {
 
 	@JsonProperty("lista_vettori")
-	private List<List<Integer>> vectorList;
+	private List<List<Byte>> vectorList;
 
 	@JsonProperty("lista_offset")
 	private List<List<Integer>> vectorOffset;
@@ -20,11 +20,11 @@ public class InputVectorsContainer {
 	
 	public InputVectorsContainer() {}	
 
-	public List<List<Integer>> getVectorList() {
+	public List<List<Byte>> getVectorList() {
 		return vectorList;
 	}
 
-	public void setVectorList(List<List<Integer>> vectorList) {
+	public void setVectorList(List<List<Byte>> vectorList) {
 		this.vectorList = vectorList;
 	}
 

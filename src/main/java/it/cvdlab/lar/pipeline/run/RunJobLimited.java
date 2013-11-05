@@ -98,7 +98,8 @@ public class RunJobLimited {
 		int vectorLength = ivc.getVectorList().get(0).size();
 		
 		System.out.println("Conversione a binario delle q.c.");
-		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
+		// int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
+		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromByteArrays(ivc.getVectorList()));
 		
 		int bitSetLength = (int)Math.ceil((double)vectorLength / (double)Integer.SIZE);
 

@@ -24,6 +24,7 @@ import org.apache.commons.cli.ParseException;
 public class RunJob {
 	private static final String BORDO3_FILE = DefaultFileNames.BORDO3_FILE;
 	private static final String SELETTORI_FILE = DefaultFileNames.SELETTORI_FILE;
+	private static final String SELETTORI_BIN_FILE = DefaultFileNames.SELETTORI_BIN_FILE;
 	private static final String OUTPUT_FILE = DefaultFileNames.OUTPUT_FILE;
 	private static final boolean USE_BINARY = false;
 	
@@ -34,6 +35,8 @@ public class RunJob {
 		Options cmdLineOptions = new Options();
 		cmdLineOptions.addOption("b", "bordo", true, "input file containing the bordo matrix. Default: " + BORDO3_FILE);
 		cmdLineOptions.addOption("s", "selettori", true, "input file containing the chains. Default: " + SELETTORI_FILE);
+		cmdLineOptions.addOption("v", "selettori-binari", true, "input file containing the chains. Default: " + SELETTORI_BIN_FILE);
+		cmdLineOptions.addOption("w", "selettori-dim", true, "dimesion of the chain [mandatory for binary].");
 		cmdLineOptions.addOption("o", "output", true, "output file. Default: " + OUTPUT_FILE);
 		cmdLineOptions.addOption("y", "binaryoutput", false, "output file in binary. Default: " + USE_BINARY);
 		cmdLineOptions.addOption("h", "help", false, "print help");
@@ -56,6 +59,8 @@ public class RunJob {
 		
 		String input_bordo = BORDO3_FILE;
 		String input_selettori = SELETTORI_FILE;
+		int input_selettori_dim = 0;
+		boolean input_selettori_binari = false;
 		String output_vettori = OUTPUT_FILE;
 		boolean use_binary = USE_BINARY;
 		
@@ -63,9 +68,16 @@ public class RunJob {
 			input_bordo = cmd.getOptionValue("b");
 		}
 		
-		if (cmd.hasOption("s")) {
-			input_selettori = cmd.getOptionValue("s");
+		if (cmd.hasOption("v") && cmd.hasOption("w")) {
+			input_selettori_binari = true;
+			input_selettori_dim = Integer.parseInt(cmd.getOptionValue("w"));
+			input_selettori = cmd.getOptionValue("v");
+		} else {
+			if (cmd.hasOption("s")) {
+				input_selettori = cmd.getOptionValue("s");
+			}			
 		}
+
 		
 		if (cmd.hasOption("o")) {
 			output_vettori = cmd.getOptionValue("o");
@@ -86,7 +98,12 @@ public class RunJob {
 			System.out.println("Lettura bordo3");
 			CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
 			System.out.println("Lettura q.c.");
-			InputVectorsContainer ivc = InputVectorsSerialize.fromFile(input_selettori);
+			InputVectorsContainer ivc = null;
+			if (input_selettori_binari) {
+				ivc = InputVectorsSerialize.fromBinaryFile(input_selettori, input_selettori_dim);
+			} else {
+				ivc = InputVectorsSerialize.fromFile(input_selettori);
+			}
 			runJob(bordo3, ivc, output_vettori, use_binary);
 		} catch(Exception e) {
 			System.out.println("Exception while running: " + e.toString());
@@ -98,7 +115,8 @@ public class RunJob {
 		int vectorLength = ivc.getVectorList().get(0).size();
 		
 		System.out.println("Conversione a binario delle q.c.");
-		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
+		// int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromArrays(ivc.getVectorList()));
+		int[] flatResult = ArrayUtils.flatten(BinaryTranslator.fromByteArrays(ivc.getVectorList()));
 		
 		int bitSetLength = (int)Math.ceil((double)vectorLength / (double)Integer.SIZE);
 
