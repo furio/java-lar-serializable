@@ -73,7 +73,8 @@ public class RunJobLimited {
 		
 		if (cmd.hasOption("y")) {
 			use_binary = true;
-			output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
+			if (!output_vettori.endsWith(DefaultFileNames.BIN_EXT))
+				output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
 		}
 		
 		try {

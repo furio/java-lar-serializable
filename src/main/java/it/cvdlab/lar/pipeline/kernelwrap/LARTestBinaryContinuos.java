@@ -32,7 +32,7 @@ import com.nativelibs4java.util.IOUtils;
 
 public class LARTestBinaryContinuos {
 	private static DeviceFeature runOn = DeviceFeature.GPU;
-	private static int memDivisor = (runOn == DeviceFeature.CPU) ? 8 : 2;
+	private static int memDivisor = (runOn == DeviceFeature.CPU) ? 8 : 1;
 	private static String KERNEL_FILE = "larnewfullbinary_modulo_offset.cl";
 	private static String KERNEL_FUNCTION = "many_vec_mul_bitwise_binary"; // "many_vec_mul_local_bitwise"
 	
@@ -67,7 +67,7 @@ public class LARTestBinaryContinuos {
 		long startTime = System.currentTimeMillis();
 
 		System.err.println("Kernel context");
-		CLContext context = JavaCL.createBestContext(runOn);
+		CLContext context = JavaCL.createBestContext(runOn, DeviceFeature.Accelerator);
 
 		if (context == null) {
 			clearAllocatedCLObjects(buffersRelease);
@@ -205,9 +205,9 @@ public class LARTestBinaryContinuos {
 			
 			
 			// TODO: Magic number GTX 670
-			if (runOn == DeviceFeature.GPU) {
-				suggestedWorkItems = 192;
-			}
+			// if (runOn == DeviceFeature.GPU) {
+			// 	suggestedWorkItems = 192;
+			// }
 				
 			wgSize = new int[]{ (int) (multipleGroupSize * suggestedWorkItems) }; 
 			locSize = new int[]{ (int) suggestedWorkItems };			

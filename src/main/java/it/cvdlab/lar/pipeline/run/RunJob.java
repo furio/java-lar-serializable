@@ -36,7 +36,7 @@ public class RunJob {
 		cmdLineOptions.addOption("b", "bordo", true, "input file containing the bordo matrix. Default: " + BORDO3_FILE);
 		cmdLineOptions.addOption("s", "selettori", true, "input file containing the chains. Default: " + SELETTORI_FILE);
 		cmdLineOptions.addOption("v", "selettori-binari", true, "input file containing the chains. Default: " + SELETTORI_BIN_FILE);
-		cmdLineOptions.addOption("w", "selettori-dim", true, "dimesion of the chain [mandatory for binary].");
+		// cmdLineOptions.addOption("w", "selettori-dim", true, "dimesion of the chain [mandatory for binary].");
 		cmdLineOptions.addOption("o", "output", true, "output file. Default: " + OUTPUT_FILE);
 		cmdLineOptions.addOption("y", "binaryoutput", false, "output file in binary. Default: " + USE_BINARY);
 		cmdLineOptions.addOption("h", "help", false, "print help");
@@ -59,7 +59,7 @@ public class RunJob {
 		
 		String input_bordo = BORDO3_FILE;
 		String input_selettori = SELETTORI_FILE;
-		int input_selettori_dim = 0;
+		// int input_selettori_dim = 0;
 		boolean input_selettori_binari = false;
 		String output_vettori = OUTPUT_FILE;
 		boolean use_binary = USE_BINARY;
@@ -68,9 +68,9 @@ public class RunJob {
 			input_bordo = cmd.getOptionValue("b");
 		}
 		
-		if (cmd.hasOption("v") && cmd.hasOption("w")) {
+		if (cmd.hasOption("v")) {
 			input_selettori_binari = true;
-			input_selettori_dim = Integer.parseInt(cmd.getOptionValue("w"));
+			// input_selettori_dim = Integer.parseInt(cmd.getOptionValue("w"));
 			input_selettori = cmd.getOptionValue("v");
 		} else {
 			if (cmd.hasOption("s")) {
@@ -85,7 +85,8 @@ public class RunJob {
 		
 		if (cmd.hasOption("y")) {
 			use_binary = true;
-			output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
+			if (!output_vettori.endsWith(DefaultFileNames.BIN_EXT))
+				output_vettori = output_vettori + DefaultFileNames.BIN_EXT;
 		}
 		
 		System.out.println("Bordo3: " + input_bordo);
@@ -97,13 +98,16 @@ public class RunJob {
 		try{
 			System.out.println("Lettura bordo3");
 			CsrMatrix bordo3 = CsrMatrixSerializable.fromFile(input_bordo);
-			System.out.println("Lettura q.c.");
+			
 			InputVectorsContainer ivc = null;
 			if (input_selettori_binari) {
-				ivc = InputVectorsSerialize.fromBinaryFile(input_selettori, input_selettori_dim);
+				System.out.println("Lettura q.c. binary (" + bordo3.getColCount() +" + 12 per chain)");
+				ivc = InputVectorsSerialize.fromBinaryFile(input_selettori, bordo3.getColCount());
 			} else {
+				System.out.println("Lettura q.c. json");
 				ivc = InputVectorsSerialize.fromFile(input_selettori);
 			}
+			System.out.println("Starting job");
 			runJob(bordo3, ivc, output_vettori, use_binary);
 		} catch(Exception e) {
 			System.out.println("Exception while running: " + e.toString());

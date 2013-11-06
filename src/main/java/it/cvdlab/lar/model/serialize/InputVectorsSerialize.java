@@ -43,6 +43,7 @@ public class InputVectorsSerialize {
     
     public static InputVectorsContainer fromBinaryFile(String filePath, int vectorLength) {
     	InputVectorsContainer ivInput = new InputVectorsContainer();
+    	File fIn = null;
     	FileInputStream fos = null;
     	int[] coord = new int[3];
     	byte[] resultLine = new byte[vectorLength];
@@ -50,11 +51,17 @@ public class InputVectorsSerialize {
     	List<List<Integer>> offsetArrays = Lists.newArrayList();
     	List<List<Byte>> byteArrays = Lists.newArrayList();
     	
+    	
+    	
     	try {
-    		fos = new FileInputStream(filePath);
+    		fIn = new File(filePath);
+    		long fileSize = fIn.length();
+    		fos = new FileInputStream(fIn);
+    		long maxChains = fileSize / ((long)(vectorLength+12));
+    		// System.err.println("MaxChains: " + maxChains);
     		
     		ByteBuffer bfWrite = ByteBuffer.allocate(4);
-    		for( ;  ; ) {
+    		for( long i = 0 ; i < maxChains ; ++i) {
     			
     			// Write offsets
     			Arrays.fill(coord, 0);
@@ -70,7 +77,8 @@ public class InputVectorsSerialize {
     			// Read bytes
     			it.cvdlab.lar.pipeline.helpers.ArrayUtils.fill(resultLine, (byte) 0);
     			fos.read(resultLine);
-    			byteArrays.add( ImmutableList.copyOf( Bytes.asList(resultLine) ) );    			
+    			byteArrays.add( ImmutableList.copyOf( Bytes.asList(resultLine) ) );
+    			// System.err.println("Read chain: " + byteArrays.size() + "-" + i);
     		}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -78,7 +86,7 @@ public class InputVectorsSerialize {
 			try {
 				if (fos != null) {
 					fos.close();
-				}
+				}				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
