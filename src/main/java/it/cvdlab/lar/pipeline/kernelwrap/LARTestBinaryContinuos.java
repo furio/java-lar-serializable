@@ -67,7 +67,7 @@ public class LARTestBinaryContinuos {
 		long startTime = System.currentTimeMillis();
 
 		System.err.println("Kernel context");
-		CLContext context = JavaCL.createBestContext(runOn, DeviceFeature.Accelerator);
+		CLContext context = JavaCL.createBestContext(DeviceFeature.Accelerator, runOn);
 
 		if (context == null) {
 			clearAllocatedCLObjects(buffersRelease);

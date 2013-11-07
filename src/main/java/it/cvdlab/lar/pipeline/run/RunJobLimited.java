@@ -9,6 +9,7 @@ import it.cvdlab.lar.model.serialize.OutputVectorsSerialize;
 import it.cvdlab.lar.pipeline.helpers.ArrayUtils;
 import it.cvdlab.lar.pipeline.helpers.BinaryTranslator;
 import it.cvdlab.lar.pipeline.helpers.ResultTuple;
+import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinary;
 import it.cvdlab.lar.pipeline.kernelwrap.LARTestBinaryJava;
 import it.cvdlab.lar.pipeline.run.utilities.DefaultFileNames;
 
@@ -107,8 +108,8 @@ public class RunJobLimited {
 		System.out.println("Chiamata kernel");
 		System.out.println("New vLength: " + bitSetLength);
 		System.out.println("Old vLength: " + vectorLength);
-		List<ResultTuple> resultTuples = LARTestBinaryJava.clMultiply(b3, flatResult, bitSetLength, vectorLength);
-		// List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		// List<ResultTuple> resultTuples = LARTestBinaryJava.clMultiply(b3, flatResult, bitSetLength, vectorLength);
+		List<ResultTuple> resultTuples = LARTestBinary.clMultiply(b3, flatResult, bitSetLength, vectorLength);
 		
 		OutputVectorsContainer ov  = OutputVectorsSerialize.fromResultTuple(resultTuples, ivc, b3.getRowCount());
 		
